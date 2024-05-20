@@ -33,4 +33,6 @@ SECTIONS
 		*(.comment)
 		*(.gnu.attributes)
 	}
+	
+	FontPrint = 0x005613a0;
 }

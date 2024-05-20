@@ -4,7 +4,7 @@ cd "$(dirname "$0")"
 
 source "../../scripts/find_toolchain.sh"
 
-CC_FLAGS="-ffreestanding -nostdinc -nostdlib"
+RD_CXX_FLAGS="-ffreestanding -nostdinc -nostdlib -mabi=eabi -mno-abicalls -fno-exceptions"
 
-"$EE_CC" -c hello.c -o hello.o $CC_FLAGS
-"$EE_LD" hello.o -o hello.elf -T ../linkfile.ld
+"$RD_CXX" -c hello.cpp -o hello.o $RD_CXX_FLAGS
+"$RD_LD" hello.o -o hello.elf -T ../linkfile.ld -m "$RD_LD_EMULATION"
