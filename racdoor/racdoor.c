@@ -1,3 +1,7 @@
+#include <racdoor/buffer.h>
+#include <racdoor/elf.h>
+#include <racdoor/util.h>
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -40,25 +44,6 @@ Build builds[] = {
 };
 int32_t build_count = sizeof(builds) / sizeof(Build);
 
-// **** Utilities ****
-
-#define CHECK(condition, ...) if(!(condition)) { fprintf(stderr, __VA_ARGS__); exit(1); }
-
-void* checked_malloc(unsigned long size);
-int32_t align32(int32_t value, int32_t alignment);
-
-// **** File I/O ****
-
-typedef struct {
-	char* data;
-	int32_t size;
-} Buffer;
-
-Buffer read_file(const char* path);
-void write_file(const char* path, Buffer buffer);
-void* buffer_get(Buffer buffer, int32_t offset, int32_t size, const char* thing);
-Buffer sub_buffer(Buffer buffer, int32_t offset, int32_t size, const char* thing);
-
 // **** Save format ****
 
 enum SaveBlockType {
@@ -92,40 +77,6 @@ typedef struct {
 #pragma pack(pop)
 
 // **** Executable file formats ****
-
-typedef struct {
-	/* 0x0 */ uint32_t ident_magic;
-	/* 0x4 */ uint8_t ident_class;
-	/* 0x5 */ uint8_t ident_endianess;
-	/* 0x6 */ uint8_t ident_version;
-	/* 0x7 */ uint8_t ident_abi;
-	/* 0x8 */ uint8_t ident_abi_version;
-	/* 0x9 */ uint8_t pad[7];
-	/* 0x10 */ uint16_t type;
-	/* 0x12 */ uint16_t machine;
-	/* 0x14 */ uint32_t version;
-	/* 0x18 */ uint32_t entry;
-	/* 0x1c */ uint32_t phoff;
-	/* 0x20 */ uint32_t shoff;
-	/* 0x24 */ uint32_t flags;
-	/* 0x28 */ uint16_t ehsize;
-	/* 0x2a */ uint16_t phentsize;
-	/* 0x2c */ uint16_t phnum;
-	/* 0x2e */ uint16_t shentsize;
-	/* 0x30 */ uint16_t shnum;
-	/* 0x32 */ uint16_t shstrndx;
- } ElfFileHeader;
-
-typedef struct {
-	/* 0x00 */ uint32_t type;
-	/* 0x04 */ uint32_t offset;
-	/* 0x08 */ uint32_t vaddr;
-	/* 0x0c */ uint32_t paddr;
-	/* 0x10 */ uint32_t filesz;
-	/* 0x14 */ uint32_t memsz;
-	/* 0x18 */ uint32_t flags;
-	/* 0x1c */ uint32_t align;
-} ElfProgramHeader;
 
 typedef struct {
 	uint32_t address;
@@ -472,64 +423,4 @@ uint32_t convert_elf(char* output, int32_t output_size, Buffer input)
 	printf("%.2fkb left\n", size_left / 1024.f);
 	
 	return elf_header->entry;
-}
-
-Buffer read_file(const char* path)
-{
-	FILE* file = fopen(path, "rb");
-	CHECK(file, "Failed to open input file '%s'.\n", path);
-	
-	CHECK(fseek(file, 0, SEEK_END) == 0, "Failed to seek to beginning of input file '%s'.\n", path);
-	long file_size = ftell(file);
-	CHECK(file_size > 0 && file_size < UINT32_MAX, "Cannot determine file size for input file '%s'.\n", path);
-	
-	char* file_data = checked_malloc(file_size);
-	CHECK(fseek(file, 0, SEEK_SET) == 0, "Failed to seek to beginning of input file '%s'.\n", path);
-	CHECK(fread(file_data, file_size, 1, file) == 1, "Failed to read input file '%s'.\n", path);
-	
-	fclose(file);
-	
-	Buffer buffer = {
-		.data = file_data,
-		.size = file_size
-	};
-	return buffer;
-}
-
-void write_file(const char* path, Buffer buffer)
-{
-	FILE* file = fopen(path, "wb");
-	CHECK(file, "Failed to open output file '%s'.\n", path);
-	
-	CHECK(fwrite(buffer.data, buffer.size, 1, file) == 1, "Failed to write output file '%s'.\n", path);
-	
-	fclose(file);
-}
-
-void* buffer_get(Buffer buffer, int32_t offset, int32_t size, const char* thing)
-{
-	CHECK(offset > -1 && offset + size <= buffer.size, "Out of bounds %s.\n", thing);
-	return buffer.data + offset;
-}
-
-Buffer sub_buffer(Buffer buffer, int32_t offset, int32_t size, const char* thing)
-{
-	CHECK(offset > -1 && offset + size <= buffer.size, "Out of bounds %s.\n", thing);
-	Buffer result = {
-		.data = buffer.data + offset,
-		.size = size
-	};
-	return result;
-}
-
-void* checked_malloc(unsigned long size)
-{
-	void* ptr = malloc(size);
-	CHECK(ptr || size == 0, "Failed to allocate memory.\n");
-	return ptr;
-}
-
-int32_t align32(int32_t value, int32_t alignment)
-{
-	return value + (-value & (alignment - 1));
 }
