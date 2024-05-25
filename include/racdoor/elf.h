@@ -38,16 +38,47 @@ typedef struct {
 } ElfProgramHeader;
 
 typedef struct {
-	uint32_t sh_name;
-	uint32_t sh_type;
-	uint32_t sh_flags;
-	uint32_t sh_addr;
-	uint32_t sh_offset;
-	uint32_t sh_size;
-	uint32_t sh_link;
-	uint32_t sh_info;
-	uint32_t sh_addralign;
-	uint32_t sh_entsize;
+	/* 0x00 */ uint32_t name;
+	/* 0x04 */ uint32_t type;
+	/* 0x08 */ uint32_t flags;
+	/* 0x0c */ uint32_t addr;
+	/* 0x10 */ uint32_t offset;
+	/* 0x14 */ uint32_t size;
+	/* 0x18 */ uint32_t link;
+	/* 0x1c */ uint32_t info;
+	/* 0x20 */ uint32_t addralign;
+	/* 0x24 */ uint32_t entsize;
 } ElfSectionHeader;
+
+typedef enum {
+	SHT_NULL = 0,
+	SHT_PROGBITS = 1,
+	SHT_SYMTAB = 2,
+	SHT_STRTAB = 3
+} ElfSectionType;
+
+typedef struct {
+	/* 0x0 */ uint32_t name;
+	/* 0x4 */ uint32_t value;
+	/* 0x8 */ uint32_t size;
+	/* 0xc */ uint8_t info;
+	/* 0xd */ uint8_t other;
+	/* 0xe */ uint16_t shndx;
+} ElfSymbol;
+
+typedef enum {
+	STT_NOTYPE = 0,
+	STT_OBJECT = 1,
+	STT_FUNC = 2,
+	STT_SECTION = 3,
+	STT_FILE = 4,
+	STT_COMMON = 5,
+	STT_TLS = 6
+} ElfSymbolType;
+
+typedef enum {
+	STB_LOCAL = 0,
+	STB_GLOBAL = 1
+} ElfSymbolBind;
 
 #endif

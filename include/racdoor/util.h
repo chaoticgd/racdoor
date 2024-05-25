@@ -5,12 +5,19 @@
 	#include <stdio.h>
 	#include <stdlib.h>
 #endif
-	
+
+#define MIN(x, y) ((x < y) ? (x) : (y))
+#define MAX(x, y) ((x > y) ? (x) : (y))
+
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+
 #ifdef _EE
-	#define CHECK() if(!(condition)) __builtin_trap();
+	#define ERROR(...) __builtin_trap();
 #else
-	#define CHECK(condition, ...) if(!(condition)) { fprintf(stderr, __VA_ARGS__); exit(1); }
+	#define ERROR(...) do { fprintf(stderr, "ERROR: " __VA_ARGS__); exit(1); } while(0);
 #endif
+
+#define CHECK(condition, ...) if(!(condition)) { ERROR(__VA_ARGS__); }
 
 static inline int32_t align32(int32_t value, int32_t alignment)
 {
