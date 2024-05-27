@@ -3,8 +3,8 @@ CC = ee-gcc
 CXX = ee-g++
 
 # Racdoor tools
-ADDRGEN = $(PROJECTDIR)/addrgen/addrgen
 RACDOOR = $(PROJECTDIR)/racdoor/racdoor
+TBLGEN = $(PROJECTDIR)/tblgen/tblgen
 
 INCLUDES += -I$(PROJECTDIR)/include
 

@@ -6,7 +6,7 @@ TABLE_FROM_BIN = $(patsubst $(BIN).%.elf,$(BIN).%.t,$@)
 
 .PRECIOUS: $(BIN).%.t
 $(BIN).%.t: $(OBJS) $(PROJECTDIR)/tables/%.csv
-	$(ADDRGEN) $(OBJS) -t $(PROJECTDIR)/tables/$(SERIAL_FROM_TABLE).csv -o $@ -v
+	$(TBLGEN) $(OBJS) -t $(PROJECTDIR)/tables/$(SERIAL_FROM_TABLE).csv -o $@ -v
 
 $(BIN).%.elf: $(OBJS) $(BIN).%.t
 	$(CC) $(OBJS) $(TABLE_FROM_BIN) -o $@ $(LINKFLAGS)

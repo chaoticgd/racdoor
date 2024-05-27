@@ -55,7 +55,7 @@ int main(int argc, char** argv)
 	}
 	
 	CHECK(input_object_count > 0 && input_table.data != NULL && output_object_path != NULL,
-		"usage: %s <input objects...> -t <input table> -o <output object> [-v]\n", argc > 0 ? argv[0] : "addrgen");
+		"usage: %s <input objects...> -t <input table> -o <output object> [-v]\n", argc > 0 ? argv[0] : "tblgen");
 	
 	/* Parse the input CSV file into a symbol table in memory. */
 	InputTable table = parse_table(input_table);

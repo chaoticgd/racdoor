@@ -3,8 +3,8 @@ CC = gcc
 CXX = g++
 
 # Racdoor tools
-ADDRGEN =
 RACDOOR =
+TBLGEN =
 
 INCLUDES += -I$(PROJECTDIR)/include
 

@@ -1,9 +1,9 @@
 PROJECTDIR = ..
 
-BIN = addrgen
-SRCS = addrgen.c
+BIN = tblgen
+SRCS = tblgen.c
 
-host: addrgen
+host: tblgen
 ee:
 clean: compileclean linkclean
 
