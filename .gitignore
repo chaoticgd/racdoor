@@ -1,2 +1,6 @@
+*.d
 *.elf
 *.o
+*.t
+
+*secret*
