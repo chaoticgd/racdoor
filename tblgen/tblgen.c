@@ -369,7 +369,8 @@ static Buffer build_object_file(InputTable* table)
 	
 	static const char* section_names[] = {
 		"",
-		"racdoor.addrtbl",
+		".racdoor.dummy",
+		".racdoor.addrtbl",
 		".shstrtab",
 		".symtab",
 		".strtab"
@@ -383,7 +384,7 @@ static Buffer build_object_file(InputTable* table)
 	for (int32_t i = 0; i < ARRAY_SIZE(section_names); i++)
 		shstrtab_size += strlen(section_names[i]) + 1;
 	shstrtab_size = align32(shstrtab_size, 4);
-	int32_t section_headers_size = 5 * sizeof(ElfSectionHeader);
+	int32_t section_headers_size = ARRAY_SIZE(section_names) * sizeof(ElfSectionHeader);
 	int32_t symtab_size = (1 + static_symbol_count) * sizeof(ElfSymbol);
 	int32_t strtab_size = 1;
 	for (int32_t i = 0; i < table->symbol_count; i++)
@@ -419,7 +420,7 @@ static Buffer build_object_file(InputTable* table)
 	header->ehsize = sizeof(ElfFileHeader);
 	header->shentsize = sizeof(ElfSectionHeader);
 	header->shnum = ARRAY_SIZE(section_names);
-	header->shstrndx = 2;
+	header->shstrndx = 3; /* .shstrtab */
 	
 	/* Fill in the runtime linking table. */
 	uint8_t* addrtbl_header = (uint8_t*) &buffer.data[addrtbl_header_offset];
@@ -447,7 +448,13 @@ static Buffer build_object_file(InputTable* table)
 	
 	ElfSectionHeader sections[] = {
 		{},
-		/* racdoor.addrtbl */ {
+		/* .racdoor.dummy */ {
+			.type = SHT_PROGBITS,
+			.offset = 0,
+			.size = 0,
+			.addralign = 1
+		},
+		/* .racdoor.addrtbl */ {
 			.type = SHT_PROGBITS,
 			.offset = addrtbl_header_offset,
 			.size = addrtbl_header_size + addrtbl_data_size,
@@ -463,7 +470,7 @@ static Buffer build_object_file(InputTable* table)
 			.type = SHT_SYMTAB,
 			.offset = symtab_offset,
 			.size = symtab_size,
-			.link = 4,
+			.link = 5, /* .strtab */
 			.addralign = 4,
 			.entsize = sizeof(ElfSymbol)
 		},
@@ -502,7 +509,7 @@ static Buffer build_object_file(InputTable* table)
 			symbol->value = table->symbols[i].core_address;
 			symbol->size = table->symbols[i].size;
 			symbol->info = table->symbols[i].type | (STB_GLOBAL << 4);
-			symbol->shndx = 1;
+			symbol->shndx = 1; /* .racdoor.dummy */
 			
 			strcpy(strtab + symbol->name, table->symbols[i].name);
 			

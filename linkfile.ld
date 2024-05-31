@@ -1,18 +1,6 @@
 /* We enter through the racdoor. */
 ENTRY(racdoor_entry);
 
-MEMORY
-{
-	/* This memory range will be used by OPL if the user has that setup so we
-	   don't want to touch it. */
-	opl (rwx) : ORIGIN = 0x00084000, LENGTH = 304K
-	
-	/* This memory range, like the range above, is technically reserved for the
-	   PS2's operating system but in practice it's never used so it's a great
-	   place for a code cave. */
-	cave (rwx) : ORIGIN = 0x000D0000, LENGTH = 192K
-}
-
 PHDRS
 {
 	text PT_LOAD;
@@ -20,12 +8,27 @@ PHDRS
 
 SECTIONS
 {
+	. = 0x0;
+	
+	/* This is a fake section used to hold all the symbols used for linking with
+	   the game. It must have an address of zero so that the linker doesn't try
+	   to relocate any of them since they already have absolute addresses. */
+	.racdoor.dummy :
+	{
+		*(.racdoor.dummy)
+	}
+	
+	/* This is a good spot for a code cave. It's low enough that it's not used
+	   by the game, but is also high enough that in practice it's not used by
+	   the operating system or OPL. */
+	. = 0x000d0000;
+	
 	.text :
 	{
 		*(.text)
 		*(.text.*)
 		*(.gnu.linkonce.t*)
-	} >cave :text
+	} :text
 	
 	.data ALIGN(128) :
 	{
@@ -64,8 +67,8 @@ SECTIONS
 		*(COMMON)
 	}
 	
-	racdoor.addrtbl :
+	.racdoor.addrtbl :
 	{
-		*(racdoor.addrtbl)
+		*(.racdoor.addrtbl)
 	}
 }
