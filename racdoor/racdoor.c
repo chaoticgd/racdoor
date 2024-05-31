@@ -130,6 +130,7 @@ SaveBlock* lookup_block(SaveSlotBlockList* list, int32_t type);
 #define MIPS_JAL(target) ((target >> 2) & 0x3ffffff) | (0b000011 << 26)
 #define MIPS_BEQ(rs, rt, offset) ((offset) & 0xffff) | ((rt) << 16) | ((rs) << 21) | (0b100 << 26)
 #define MIPS_ADDIU(dest, source, immediate) (((immediate) & 0xffff) | ((dest) << 16) | ((source) << 21) | (0b001001 << 26))
+#define MIPS_ORI(dest, source, immediate) (((immediate) & 0xffff) | ((dest) << 16) | ((source) << 21) | (0b001101 << 26))
 #define MIPS_LUI(dest, immediate) ((immediate) & 0xffff) | ((dest) << 16) | (0b001111 << 26)
 #define MIPS_LW(dest, offset, base) (offset & 0xffff) | ((dest) << 16) | ((base) << 21) | (0b100011 << 26)
 #define MIPS_LBU(dest, offset, base) (offset & 0xffff) | ((dest) << 16) | ((base) << 21) | (0b100100 << 26)
@@ -233,9 +234,9 @@ void mutate_save_game(SaveSlot* save, Buffer elf, Addresses* addresses)
 	
 	// Unpack the payload and jump to it.
 	*shellcode++ = MIPS_LUI(MIPS_A0, addresses->HelpDataMessages >> 16);
-	*shellcode++ = MIPS_ADDIU(MIPS_A0, MIPS_A0, addresses->HelpDataMessages);
+	*shellcode++ = MIPS_ORI(MIPS_A0, MIPS_A0, addresses->HelpDataMessages);
 	*shellcode++ = MIPS_LUI(MIPS_A1, 0xffff);
-	*shellcode++ = MIPS_ADDIU(MIPS_A1, MIPS_A1, 0xffff);
+	*shellcode++ = MIPS_ORI(MIPS_A1, MIPS_A1, 0xffff);
 	*shellcode++ = MIPS_JAL(addresses->unpackbuff);
 	*shellcode++ = MIPS_NOP(); // Delay slot.
 	// flush cache here
@@ -246,7 +247,7 @@ void mutate_save_game(SaveSlot* save, Buffer elf, Addresses* addresses)
 	uint32_t expected_sp = 0x01fffae0;
 	*shellcode++ = MIPS_ADDIU(MIPS_A0, MIPS_SP, memcpy_dest_addr - expected_sp);
 	*shellcode++ = MIPS_LUI(MIPS_A1, addresses->HelpLog >> 16);
-	*shellcode++ = MIPS_ADDIU(MIPS_A1, MIPS_A1, addresses->HelpLog);
+	*shellcode++ = MIPS_ORI(MIPS_A1, MIPS_A1, addresses->HelpLog);
 	*shellcode++ = MIPS_ADDIU(MIPS_A2, MIPS_A1, 12);
 	*shellcode++ = MIPS_ADDIU(MIPS_T0, MIPS_ZERO, 0xff);
 	// loop begin
@@ -267,18 +268,18 @@ void mutate_save_game(SaveSlot* save, Buffer elf, Addresses* addresses)
 	
 	// Clean up HelpLogPos so we never call into this shellcode again.
 	*shellcode++ = MIPS_LUI(MIPS_T0, addresses->HelpLogPos >> 16);
-	*shellcode++ = MIPS_ADDIU(MIPS_T0, MIPS_T0, addresses->HelpLogPos);
+	*shellcode++ = MIPS_ORI(MIPS_T0, MIPS_T0, addresses->HelpLogPos);
 	*shellcode++ = MIPS_SW(MIPS_ZERO, 0, MIPS_T0);
 	
 	// Clean up the corrupted instructions in GadgetBox::GetGadgetEvent.
 	*shellcode++ = MIPS_LUI(MIPS_A0, (addresses->GetGadgetEvent_jal_FastMemCpy + 4) >> 16);
-	*shellcode++ = MIPS_ADDIU(MIPS_A0, MIPS_A0, addresses->GetGadgetEvent_jal_FastMemCpy + 4);
+	*shellcode++ = MIPS_ORI(MIPS_A0, MIPS_A0, addresses->GetGadgetEvent_jal_FastMemCpy + 4);
 	*shellcode++ = MIPS_LUI(MIPS_T0, 0x2406);
-	*shellcode++ = MIPS_ADDIU(MIPS_T0, MIPS_T0, 0x0050);
+	*shellcode++ = MIPS_ORI(MIPS_T0, MIPS_T0, 0x0050);
 	*shellcode++ = MIPS_SW(MIPS_T0, 0, MIPS_A0);
 	*shellcode++ = MIPS_ADDIU(MIPS_A0, MIPS_A0, 4);
 	*shellcode++ = MIPS_LUI(MIPS_T0, 0xa2b4);
-	*shellcode++ = MIPS_ADDIU(MIPS_T0, MIPS_T0, 0x0002);
+	*shellcode++ = MIPS_ORI(MIPS_T0, MIPS_T0, 0x0002);
 	*shellcode++ = MIPS_SW(MIPS_T0, 0, MIPS_A0);
 	
 	// Jump back to the game.
