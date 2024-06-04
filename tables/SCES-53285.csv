@@ -1,2 +1,4 @@
-NAME,TYPE,COMMENT,CORE,0,1
-Level,OBJECT,The level number.,0021de98,,
+NAME,TYPE,COMMENT,CORE,0,1,2,3,4
+Level,OBJECT,The level number.,0021de98,,,,,
+MemSlots,OBJECT,Runtime memory map.,,,243800,2222,3333,4444
+FlushCache,FUNC,,00126d60,,,,,

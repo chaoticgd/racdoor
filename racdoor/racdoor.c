@@ -1,5 +1,6 @@
 #include <racdoor/buffer.h>
 #include <racdoor/elf.h>
+#include <racdoor/mips.h>
 #include <racdoor/util.h>
 
 #include <stdio.h>
@@ -85,7 +86,7 @@ typedef struct {
 	uint32_t entry_point;
 } RatchetSectionHeader;
 
-uint32_t convert_elf(char* output, int32_t output_size, Buffer input);
+uint32_t convert_elf(char* output, int32_t output_size, Buffer elf);
 
 // **** Save parser ****
 
@@ -113,43 +114,21 @@ SaveBlock* lookup_block(SaveSlotBlockList* list, int32_t type);
 
 // **** Save game mutator ****
 
-#define MIPS_ZERO 0
-#define MIPS_A0 4
-#define MIPS_A1 5
-#define MIPS_A2 6
-#define MIPS_A3 7
-#define MIPS_T0 8
-#define MIPS_T1 9
-#define MIPS_T2 10
-#define MIPS_T3 11
-#define MIPS_SP 29
-
-#define MIPS_NOP() 0
-#define MIPS_ADD(dest, rs, rt) 0b100000 | ((dest) << 11) | ((rt) << 16) | ((rs) << 21) | (0b000000 << 26)
-#define MIPS_J(target) ((target >> 2) & 0x3ffffff) | (0b000010 << 26)
-#define MIPS_JAL(target) ((target >> 2) & 0x3ffffff) | (0b000011 << 26)
-#define MIPS_BEQ(rs, rt, offset) ((offset) & 0xffff) | ((rt) << 16) | ((rs) << 21) | (0b100 << 26)
-#define MIPS_ADDIU(dest, source, immediate) (((immediate) & 0xffff) | ((dest) << 16) | ((source) << 21) | (0b001001 << 26))
-#define MIPS_ORI(dest, source, immediate) (((immediate) & 0xffff) | ((dest) << 16) | ((source) << 21) | (0b001101 << 26))
-#define MIPS_LUI(dest, immediate) ((immediate) & 0xffff) | ((dest) << 16) | (0b001111 << 26)
-#define MIPS_LW(dest, offset, base) (offset & 0xffff) | ((dest) << 16) | ((base) << 21) | (0b100011 << 26)
-#define MIPS_LBU(dest, offset, base) (offset & 0xffff) | ((dest) << 16) | ((base) << 21) | (0b100100 << 26)
-#define MIPS_SW(src, offset, base) (offset & 0xffff) | ((src) << 16) | ((base) << 21) | (0b101011 << 26)
-
 void mutate_save_game(SaveSlot* save, Buffer elf, Addresses* addresses);
 
 int main(int argc, char** argv)
 {
-	CHECK(argc == 4, "usage: %s <input saveN.bin> <elf to inject> <output saveN.bin>\n", argc > 0 ? argv[0] : "racdoor");
+	CHECK(argc == 4, "usage: %s <input saveN.bin> <input rdx> <output saveN.bin>\n",
+		argc > 0 ? argv[0] : "racdoor");
 	
 	const char* input_save_path = argv[1];
-	const char* elf_path = argv[2];
+	const char* input_rdx_path = argv[2];
 	const char* output_save_path = argv[3];
 	
 	Buffer file = read_file(input_save_path);
 	SaveSlot save = parse_save(file);
 	
-	Buffer elf = read_file(elf_path);
+	Buffer elf = read_file(input_rdx_path);
 	
 	Addresses addresses = builds[0].addresses;
 	mutate_save_game(&save, elf, &addresses);
@@ -385,33 +364,34 @@ SaveBlock* lookup_block(SaveSlotBlockList* list, int32_t type)
 	return block;
 }
 
-uint32_t convert_elf(char* output, int32_t output_size, Buffer input)
+u32 convert_elf(char* output, s32 output_size, Buffer elf)
 {
-	int32_t size_left = output_size;
+	s32 size_left = output_size;
 	
 	printf("%.2fkb total\n", output_size / 1024.f);
 	
-	ElfFileHeader* elf_header = buffer_get(input, 0, sizeof(ElfFileHeader), "ELF file header");
+	ElfFileHeader* elf_header = buffer_get(elf, 0, sizeof(ElfFileHeader), "ELF file header");
 	CHECK(elf_header->ident_magic == 0x464c457f, "ELF file has bad magic number.\n");
 	CHECK(elf_header->ident_class == 1, "ELF file isn't 32 bit.\n");
 	CHECK(elf_header->machine == 8, "ELF file isn't compiled for MIPS.\n");
 	
-	for(uint32_t i = 0; i < elf_header->phnum; i++)
+	ElfSectionHeader* sections = buffer_get(elf, elf_header->shoff, elf_header->shnum * sizeof(ElfSectionHeader), "ELF section headers");
+	for (u32 i = 0; i < elf_header->shnum; i++)
 	{
-		int32_t program_header_offset = elf_header->phoff + i * sizeof(ElfProgramHeader);
-		ElfProgramHeader* program_header = buffer_get(input, program_header_offset, sizeof(ElfProgramHeader), "ELF program header");
+		if (sections[i].addr == 0 || sections[i].size == 0)
+			continue;
 		
-		int32_t size = align32(sizeof(RatchetSectionHeader) + program_header->filesz, 4);
+		s32 size = align32(sizeof(RatchetSectionHeader) + sections[i].size, 4);
 		CHECK(size >= 0 && size_left >= size, "ELF too big!\n");
 		
 		RatchetSectionHeader* output_header = (RatchetSectionHeader*) output;
-		output_header->address = program_header->vaddr;
-		output_header->size = program_header->filesz;
-		output_header->section_type = 0;
+		output_header->address = sections[i].addr;
+		output_header->size = sections[i].size;
+		output_header->section_type = sections[i].type;
 		output_header->entry_point = elf_header->entry;
 		
-		char* segment = buffer_get(input, program_header->offset, program_header->filesz, "ELF segment data");
-		memcpy(output + sizeof(RatchetSectionHeader), segment, program_header->filesz);
+		char* section_data = buffer_get(elf, sections[i].offset, sections[i].size, "ELF segment data");
+		memcpy(output + sizeof(RatchetSectionHeader), section_data, sections[i].size);
 		
 		output += size;
 		size_left -= size;

@@ -1,9 +1,10 @@
-PROJECTDIR := ..
+PROJECTDIR = ../..
 
-SRCS = linker.c
+BIN = rdxgen
+SRCS = rdxgen.c $(PROJECTDIR)/sdk/linker.c
 
-host: linker.host.o
-ee: linker.ee.o
+host: rdxgen
+ee:
 clean: compileclean linkclean
 
 include $(PROJECTDIR)/make/config_$(TARGET).mk

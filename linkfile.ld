@@ -67,8 +67,20 @@ SECTIONS
 		*(COMMON)
 	}
 	
+	/* Runtime address table used for performing relocation. */
 	.racdoor.addrtbl :
 	{
+		_racdoor_addrtbl = .;
 		*(.racdoor.addrtbl)
+	}
+	
+	/* Runtime relocation table. This is filled in while racdoor is packing the
+	   final ELF into the save game and only contains relocations that are
+	   needed for linking against the level overlays. */
+	.racdoor.relocs :
+	{
+		_racdoor_relocs = .;
+		*(.racdoor.relocs)
+		_racdoor_relocs_end = .;
 	}
 }

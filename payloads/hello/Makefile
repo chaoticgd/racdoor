@@ -1,7 +1,7 @@
 PROJECTDIR = ../..
 
 BIN = hello
-SRCS = hello.cpp
+SRCS = hello.cpp $(PROJECTDIR)/sdk/linker.c
 
 SERIALS = SCES-53285
 

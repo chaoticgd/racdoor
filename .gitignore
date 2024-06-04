@@ -1,6 +1,7 @@
 *.d
 *.elf
+*.map
 *.o
-*.t
-
-*secret*
+*.rdx
+*.secret
+*.tbl

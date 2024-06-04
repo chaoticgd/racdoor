@@ -1,4 +1,4 @@
-PROJECTDIR = ..
+PROJECTDIR = ../..
 
 BIN = tblgen
 SRCS = tblgen.c
