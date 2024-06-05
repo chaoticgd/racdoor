@@ -33,7 +33,7 @@ typedef double f64;
 #define CHECK(condition, ...) if(!(condition)) { ERROR(__VA_ARGS__); }
 
 #ifndef _EE
-	static inline int32_t align32(int32_t value, int32_t alignment)
+	static inline s32 align32(s32 value, s32 alignment)
 	{
 		return value + (-value & (alignment - 1));
 	}

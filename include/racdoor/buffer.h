@@ -3,12 +3,11 @@
 
 #include <racdoor/util.h>
 
-#include <stdint.h>
 #include <stdlib.h>
 
 typedef struct {
 	char* data;
-	int32_t size;
+	s32 size;
 } Buffer;
 
 static inline Buffer read_file(const char* path)
@@ -18,7 +17,7 @@ static inline Buffer read_file(const char* path)
 	
 	CHECK(fseek(file, 0, SEEK_END) == 0, "Failed to seek to beginning of input file '%s'.\n", path);
 	long file_size = ftell(file);
-	CHECK(file_size > 0 && file_size < UINT32_MAX, "Cannot determine file size for input file '%s'.\n", path);
+	CHECK(file_size > 0 && file_size < 0xffffffff, "Cannot determine file size for input file '%s'.\n", path);
 	
 	char* file_data = checked_malloc(file_size + 1);
 	CHECK(fseek(file, 0, SEEK_SET) == 0, "Failed to seek to beginning of input file '%s'.\n", path);
@@ -45,13 +44,13 @@ static inline void write_file(const char* path, Buffer buffer)
 	fclose(file);
 }
 
-static inline void* buffer_get(Buffer buffer, int32_t offset, int32_t size, const char* thing)
+static inline void* buffer_get(Buffer buffer, s32 offset, s32 size, const char* thing)
 {
 	CHECK(offset > -1 && offset + size <= buffer.size, "Out of bounds %s.\n", thing);
 	return buffer.data + offset;
 }
 
-static inline const char* buffer_string(Buffer buffer, int32_t offset, const char* thing)
+static inline const char* buffer_string(Buffer buffer, s32 offset, const char* thing)
 {
 	for (char* ptr = buffer.data + offset; ptr < buffer.data + buffer.size; ptr++)
 		if (*ptr == '\0')
@@ -59,7 +58,7 @@ static inline const char* buffer_string(Buffer buffer, int32_t offset, const cha
 	ERROR("Out of bounds %s.\n", thing);
 }
 
-static inline Buffer sub_buffer(Buffer buffer, int32_t offset, int32_t size, const char* thing)
+static inline Buffer sub_buffer(Buffer buffer, s32 offset, s32 size, const char* thing)
 {
 	CHECK(offset > -1 && offset + size <= buffer.size, "Out of bounds %s.\n", thing);
 	Buffer result = {

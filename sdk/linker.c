@@ -1,3 +1,5 @@
+#include <racdoor/linker.h>
+
 #include <racdoor/elf.h>
 #include <racdoor/mips.h>
 
@@ -23,8 +25,7 @@ void apply_relocations()
 	u8 overlay_index = *(&_racdoor_addrtbl + 4 + Level);
 	u32* table = (u32*) (&_racdoor_addrtbl + head_size + overlay_index * symbol_count * 4);
 	
-	RacdoorRelocation* reloc;
-	for (reloc = &_racdoor_relocs; reloc < &_racdoor_relocs_end; reloc++)
+	for (RacdoorRelocation* reloc = &_racdoor_relocs; reloc < &_racdoor_relocs_end; reloc++)
 	{
 		u32 type = reloc->info & 0xff;
 		u32 index = reloc->info >> 8;

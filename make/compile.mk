@@ -12,7 +12,7 @@ DEPFLAGS = -MT $@ -MMD -MP -MF $*.$(TARGET).d
 
 %.$(TARGET).o: %.cpp
 %.$(TARGET).o: %.cpp %.$(TARGET).d
-	$(CXX) -c $< -o $@ $(DEPFLAGS) $(COMPILEFLAGS) $(INCLUDES)
+	$(CXX) -c $< -o $@ $(DEPFLAGS) $(COMPILEFLAGS) $(INCLUDES) -D__cplusplus
 
 $(DEPS):
 

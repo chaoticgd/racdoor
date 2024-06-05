@@ -11,29 +11,29 @@ typedef struct {
 	const char* name;
 	const char* comment;
 	ElfSymbolType type;
-	uint32_t size;
-	uint32_t core_address;
-	uint32_t overlay_addresses[MAX_OVERLAYS];
-	int32_t runtime_index;
-	int8_t overlay;
-	int8_t used;
+	u32 size;
+	u32 core_address;
+	u32 overlay_addresses[MAX_OVERLAYS];
+	s32 runtime_index;
+	s8 overlay;
+	s8 used;
 } Symbol;
 
 #define MAX_LEVELS 100
 
 typedef struct {
-	int32_t overlay_count;
-	uint8_t levels[MAX_LEVELS];
-	int32_t level_count;
+	s32 overlay_count;
+	u8 levels[MAX_LEVELS];
+	s32 level_count;
 	Symbol* symbols;
-	int32_t symbol_count;
+	s32 symbol_count;
 } SymbolTable;
 
 static SymbolTable parse_table(Buffer input);
-static int32_t parse_object_file(SymbolTable* table, Buffer object);
+static s32 parse_object_file(SymbolTable* table, Buffer object);
 static void map_symbols_to_runtime_indices(SymbolTable* table);
 static void print_table(SymbolTable* table);
-static Buffer build_object_file(SymbolTable* table, int32_t relocation_count);
+static Buffer build_object_file(SymbolTable* table, s32 relocation_count);
 static int symbolmap_comparator(const void* lhs, const void* rhs);
 
 static char* string_section; /* Used by symbolmap_comparator. */
@@ -41,7 +41,7 @@ static char* string_section; /* Used by symbolmap_comparator. */
 int main(int argc, char** argv)
 {
 	Buffer* input_objects = checked_malloc(argc * sizeof(Buffer));
-	int32_t input_object_count = 0;
+	s32 input_object_count = 0;
 	Buffer input_table = {};
 	const char* output_object_path = NULL;
 	int verbose = 0;
@@ -67,8 +67,8 @@ int main(int argc, char** argv)
 	
 	/* Check which symbols are actually referenced by the object files being
 	   built so we can omit the rest of them from the build later. */
-	int32_t relocation_count = 0;
-	for (int32_t i = 0; i < input_object_count; i++)
+	s32 relocation_count = 0;
+	for (s32 i = 0; i < input_object_count; i++)
 		relocation_count += parse_object_file(&table, input_objects[i]);
 	
 	/* Determine where each symbol lives in the runtime address table and count
@@ -104,7 +104,7 @@ static SymbolTable parse_table(Buffer input)
 	memset(table.levels, 0xff, sizeof(table.levels));
 	
 	const char* ptr = input.data;
-	int32_t column = 0, column_count = 0;
+	s32 column = 0, column_count = 0;
 	int seen_name_column = 0;
 	
 	Columns columns[MAX_COLUMNS];
@@ -137,10 +137,10 @@ static SymbolTable parse_table(Buffer input)
 				
 				/* TODO: Support multiple levels that use the same overlay. */
 				char* end = NULL;
-				int32_t level = strtoul(ptr, &end, 10);
+				s32 level = strtoul(ptr, &end, 10);
 				CHECK(end != ptr && level > -1 && level < MAX_LEVELS, "Invalid column heading.\n");
 				
-				table.levels[level] = (uint8_t) table.overlay_count;
+				table.levels[level] = (u8) table.overlay_count;
 				table.level_count = MAX(level + 1, table.level_count);
 				table.overlay_count++;
 			}
@@ -169,7 +169,7 @@ static SymbolTable parse_table(Buffer input)
 	table.symbols = checked_malloc(table.symbol_count * sizeof(Symbol));
 	memset(table.symbols, 0, table.symbol_count * sizeof(Symbol));
 	
-	int32_t symbol = 0;
+	s32 symbol = 0;
 	
 	/* Finally we iterate over each of the symbols and fill in all the names,
 	   sizes, and addresses from the rows in the CSV file. */
@@ -250,7 +250,7 @@ static SymbolTable parse_table(Buffer input)
 							break;
 						
 						char* end = NULL;
-						uint32_t value = (uint32_t) strtoul(ptr, &end, 16);
+						u32 value = (u32) strtoul(ptr, &end, 16);
 						CHECK(end != ptr, "Invalid %s on line %d.\n",
 							columns[column] == COLUMN_SIZE ? "SIZE" : "address",
 							symbol + 1);
@@ -261,7 +261,7 @@ static SymbolTable parse_table(Buffer input)
 							table.symbols[symbol].core_address = value;
 						else
 						{
-							int32_t overlay = columns[column] - COLUMN_FIRST_OVERLAY;
+							s32 overlay = columns[column] - COLUMN_FIRST_OVERLAY;
 							CHECK(overlay > -1 && overlay < table.overlay_count, "Invalid column on line %d.\n", symbol + 1);
 							
 							table.symbols[symbol].overlay_addresses[overlay] = value;
@@ -293,17 +293,17 @@ static SymbolTable parse_table(Buffer input)
 	return table;
 }
 
-static int32_t parse_object_file(SymbolTable* table, Buffer object)
+static s32 parse_object_file(SymbolTable* table, Buffer object)
 {
 	ElfFileHeader* header = buffer_get(object, 0, sizeof(ElfFileHeader), "ELF header");
-	int32_t shstrtab_offset = header->shoff + header->shstrndx * sizeof(ElfSectionHeader);
+	s32 shstrtab_offset = header->shoff + header->shstrndx * sizeof(ElfSectionHeader);
 	ElfSectionHeader* shstrtab = buffer_get(object, shstrtab_offset, sizeof(ElfSectionHeader), "section header");
 	
 	/* Find the symbol table section. */
 	ElfSectionHeader* symtab = NULL;
-	for (uint32_t i = 0; i < header->shnum; i++)
+	for (u32 i = 0; i < header->shnum; i++)
 	{
-		int32_t section_offset = header->shoff + i * sizeof(ElfSectionHeader);
+		s32 section_offset = header->shoff + i * sizeof(ElfSectionHeader);
 		ElfSectionHeader* section = buffer_get(object, section_offset, sizeof(ElfSectionHeader), "section header");
 		
 		const char* name = buffer_string(object, shstrtab->offset + section->name, "section name");
@@ -317,7 +317,7 @@ static int32_t parse_object_file(SymbolTable* table, Buffer object)
 	ElfSectionHeader* strtab = NULL;
 	if (symtab->link != 0)
 	{
-		int32_t link_offset = header->shoff + symtab->link * sizeof(ElfSectionHeader);
+		s32 link_offset = header->shoff + symtab->link * sizeof(ElfSectionHeader);
 		strtab = buffer_get(object, link_offset, sizeof(ElfSectionHeader), "linked section header");
 	}
 	
@@ -325,30 +325,30 @@ static int32_t parse_object_file(SymbolTable* table, Buffer object)
 	
 	/* Mark symbols that are referenced in the input object file as used. */
 	ElfSymbol* symbols = buffer_get(object, symtab->offset, symtab->size, "symbol table");
-	for (int32_t i = 0; i < symtab->size / sizeof(ElfSymbol); i++)
+	for (s32 i = 0; i < symtab->size / sizeof(ElfSymbol); i++)
 	{
 		const char* name = buffer_string(object, strtab->offset + symbols[i].name, "symbol name");
 		if (strlen(name) == 0)
 			continue;
 		
-		for (int32_t j = 0; j < table->symbol_count; j++)
+		for (s32 j = 0; j < table->symbol_count; j++)
 			if (table->symbols[j].name && strcmp(table->symbols[j].name, name) == 0)
 				table->symbols[j].used = 1;
 	}
 	
-	int32_t relocation_count = 0;
+	s32 relocation_count = 0;
 	
 	/* Count the number of relocations that will need to be available at runtime
 	   so that we can set create a placeholder section for them. */
-	for (uint32_t i = 0; i < header->shnum; i++)
+	for (u32 i = 0; i < header->shnum; i++)
 	{
-		int32_t section_offset = header->shoff + i * sizeof(ElfSectionHeader);
+		s32 section_offset = header->shoff + i * sizeof(ElfSectionHeader);
 		ElfSectionHeader* section = buffer_get(object, section_offset, sizeof(ElfSectionHeader), "section header");
 		if (section->type != SHT_REL)
 			continue;
 		
 		ElfRelocation* relocs = buffer_get(object, section->offset, section->size, "relocations");
-		for (int32_t j = 0; j < section->size / sizeof(ElfRelocation); j++)
+		for (s32 j = 0; j < section->size / sizeof(ElfRelocation); j++)
 		{
 			unsigned int symbol_index = relocs[j].info >> 8;
 			CHECK(symbol_index < symtab->size / sizeof(ElfSymbol), "Invalid symbol index %u.\n", symbol_index);
@@ -358,7 +358,7 @@ static int32_t parse_object_file(SymbolTable* table, Buffer object)
 			if (strlen(name) == 0)
 				continue;
 			
-			for (int32_t k = 0; k < table->symbol_count; k++)
+			for (s32 k = 0; k < table->symbol_count; k++)
 			{
 				if (table->symbols[k].overlay && table->symbols[k].name && strcmp(table->symbols[k].name, name) == 0)
 				{
@@ -374,8 +374,8 @@ static int32_t parse_object_file(SymbolTable* table, Buffer object)
 
 static void map_symbols_to_runtime_indices(SymbolTable* table)
 {
-	int32_t next_index = 0;
-	for (int32_t i = 0; i < table->symbol_count; i++)
+	s32 next_index = 0;
+	for (s32 i = 0; i < table->symbol_count; i++)
 	{
 		if (table->symbols[i].used)
 		{
@@ -392,11 +392,11 @@ static void print_table(SymbolTable* table)
 	printf("%d overlays\n", table->overlay_count);
 	printf("\n");
 	printf("%d levels:\n", table->level_count);
-	for (int32_t i = 0; i < table->level_count; i++)
+	for (s32 i = 0; i < table->level_count; i++)
 		printf("  [%d] = %d\n", i, table->levels[i]);
 	printf("\n");
 	printf("%d symbols:\n", table->symbol_count);
-	for (int32_t i = 0; i < table->symbol_count; i++)
+	for (s32 i = 0; i < table->symbol_count; i++)
 	{
 		int last = 0;
 		
@@ -408,21 +408,21 @@ static void print_table(SymbolTable* table)
 			last = printf("%s size = %x", last ? "," : "", table->symbols[i].size);
 		if (table->symbols[i].core_address != 0)
 			last = printf("%s core = %x", last ? "," : "", table->symbols[i].core_address);
-		for (int32_t j = 0; j < table->overlay_count; j++)
+		for (s32 j = 0; j < table->overlay_count; j++)
 			if (table->symbols[i].overlay_addresses[j])
 				last = printf("%s overlay[%d] = %x", last ? "," : "", j, table->symbols[i].overlay_addresses[j]);
 		printf(" }\n");
 	}
 }
 
-static Buffer build_object_file(SymbolTable* table, int32_t relocation_count)
+static Buffer build_object_file(SymbolTable* table, s32 relocation_count)
 {
 	/* Count the number of symbols that will be statically linked (the core
 	   symbols) and the number of symbols that will have to be dynamically
 	   linked (the overlay symbols). */
-	int32_t static_symbol_count = 0;
-	int32_t dynamic_symbol_count = 0;
-	for (int32_t i = 0; i < table->symbol_count; i++)
+	s32 static_symbol_count = 0;
+	s32 dynamic_symbol_count = 0;
+	for (s32 i = 0; i < table->symbol_count; i++)
 		if (table->symbols[i].used)
 		{
 			if (!table->symbols[i].overlay)
@@ -443,39 +443,39 @@ static Buffer build_object_file(SymbolTable* table, int32_t relocation_count)
 	};
 	
 	/* Determine the layout of the object file that is to be written out. */
-	int32_t file_header_size = sizeof(ElfFileHeader);
-	int32_t addrtbl_header_size = align32(4 + table->level_count, 4);
-	int32_t addrtbl_data_size = dynamic_symbol_count * table->overlay_count * 4;
-	int32_t relocs_size = relocation_count * sizeof(RacdoorRelocation);
-	int32_t symbolmap_head_size = sizeof(RacdoorSymbolMapHead) + dynamic_symbol_count * sizeof(RacdoorSymbolMapEntry);
-	int32_t symbolmap_data_size = 0;
-	for (int32_t i = 0; i < table->symbol_count; i++)
+	s32 file_header_size = sizeof(ElfFileHeader);
+	s32 addrtbl_header_size = align32(4 + table->level_count, 4);
+	s32 addrtbl_data_size = dynamic_symbol_count * table->overlay_count * 4;
+	s32 relocs_size = relocation_count * sizeof(RacdoorRelocation);
+	s32 symbolmap_head_size = sizeof(RacdoorSymbolMapHead) + dynamic_symbol_count * sizeof(RacdoorSymbolMapEntry);
+	s32 symbolmap_data_size = 0;
+	for (s32 i = 0; i < table->symbol_count; i++)
 		if (table->symbols[i].used && table->symbols[i].overlay)
 			symbolmap_data_size += strlen(table->symbols[i].name) + 1;
 	symbolmap_data_size = align32(symbolmap_data_size, 4);
-	int32_t shstrtab_size = 0;
-	for (int32_t i = 0; i < ARRAY_SIZE(section_names); i++)
+	s32 shstrtab_size = 0;
+	for (s32 i = 0; i < ARRAY_SIZE(section_names); i++)
 		shstrtab_size += strlen(section_names[i]) + 1;
 	shstrtab_size = align32(shstrtab_size, 4);
-	int32_t section_headers_size = ARRAY_SIZE(section_names) * sizeof(ElfSectionHeader);
-	int32_t symtab_size = (1 + static_symbol_count) * sizeof(ElfSymbol);
-	int32_t strtab_size = 1;
-	for (int32_t i = 0; i < table->symbol_count; i++)
+	s32 section_headers_size = ARRAY_SIZE(section_names) * sizeof(ElfSectionHeader);
+	s32 symtab_size = (1 + static_symbol_count) * sizeof(ElfSymbol);
+	s32 strtab_size = 1;
+	for (s32 i = 0; i < table->symbol_count; i++)
 		if (table->symbols[i].used && !table->symbols[i].overlay)
 			strtab_size += strlen(table->symbols[i].name) + 1;
 	
-	int32_t file_header_offset = 0;
-	int32_t addrtbl_header_offset = file_header_offset + file_header_size;
-	int32_t addrtbl_data_offset = addrtbl_header_offset + addrtbl_header_size;
-	int32_t relocs_offset = addrtbl_data_offset + addrtbl_data_size;
-	int32_t symbolmap_head_offset = relocs_offset + relocs_size;
-	int32_t symbolmap_data_offset = symbolmap_head_offset + symbolmap_head_size;
-	int32_t shstrtab_offset = symbolmap_data_offset + symbolmap_data_size;
-	int32_t section_headers_offset = shstrtab_offset + shstrtab_size;
-	int32_t symtab_offset = section_headers_offset + section_headers_size;
-	int32_t strtab_offset = symtab_offset + symtab_size;
+	s32 file_header_offset = 0;
+	s32 addrtbl_header_offset = file_header_offset + file_header_size;
+	s32 addrtbl_data_offset = addrtbl_header_offset + addrtbl_header_size;
+	s32 relocs_offset = addrtbl_data_offset + addrtbl_data_size;
+	s32 symbolmap_head_offset = relocs_offset + relocs_size;
+	s32 symbolmap_data_offset = symbolmap_head_offset + symbolmap_head_size;
+	s32 shstrtab_offset = symbolmap_data_offset + symbolmap_data_size;
+	s32 section_headers_offset = shstrtab_offset + shstrtab_size;
+	s32 symtab_offset = section_headers_offset + section_headers_size;
+	s32 strtab_offset = symtab_offset + symtab_size;
 	
-	int32_t file_size = strtab_offset + strtab_size;
+	s32 file_size = strtab_offset + strtab_size;
 	
 	Buffer buffer;
 	buffer.data = checked_malloc(file_size);
@@ -499,17 +499,17 @@ static Buffer build_object_file(SymbolTable* table, int32_t relocation_count)
 	header->shstrndx = 5; /* .shstrtab */
 	
 	/* Fill in the runtime linking table. */
-	*(uint32_t*) &buffer.data[addrtbl_header_offset] = addrtbl_header_size | (dynamic_symbol_count << 8);
-	uint8_t* addrtbl_levels = (uint8_t*) &buffer.data[addrtbl_header_offset + 4];
-	for (int32_t i = 4; i < addrtbl_header_size; i++)
-		addrtbl_levels[i] = (uint8_t) table->levels[i - 4];
+	*(u32*) &buffer.data[addrtbl_header_offset] = addrtbl_header_size | (dynamic_symbol_count << 8);
+	u8* addrtbl_levels = (u8*) &buffer.data[addrtbl_header_offset + 4];
+	for (s32 i = 4; i < addrtbl_header_size; i++)
+		addrtbl_levels[i] = (u8) table->levels[i - 4];
 	
-	uint32_t* addrtbl_data = (uint32_t*) &buffer.data[addrtbl_data_offset];
-	for (int32_t i = 0; i < table->overlay_count; i++)
+	u32* addrtbl_data = (u32*) &buffer.data[addrtbl_data_offset];
+	for (s32 i = 0; i < table->overlay_count; i++)
 	{
-		int32_t overlay_base = i * dynamic_symbol_count;
-		int32_t offset = 0;
-		for (int32_t j = 0; j < table->symbol_count; j++)
+		s32 overlay_base = i * dynamic_symbol_count;
+		s32 offset = 0;
+		for (s32 j = 0; j < table->symbol_count; j++)
 			if (table->symbols[j].used && table->symbols[j].overlay)
 				addrtbl_data[overlay_base + offset++] = table->symbols[j].overlay_addresses[i];
 	}
@@ -518,8 +518,8 @@ static Buffer build_object_file(SymbolTable* table, int32_t relocation_count)
 	RacdoorSymbolMapHead* symbolmap = (RacdoorSymbolMapHead*) &buffer.data[symbolmap_head_offset];
 	symbolmap->symbol_count = dynamic_symbol_count;
 	
-	int32_t string_offset = 0;
-	for (int32_t i = 0; i < table->symbol_count; i++)
+	s32 string_offset = 0;
+	for (s32 i = 0; i < table->symbol_count; i++)
 	{
 		if (table->symbols[i].used && table->symbols[i].overlay)
 		{
@@ -538,7 +538,7 @@ static Buffer build_object_file(SymbolTable* table, int32_t relocation_count)
 	
 	/* Fill in the section header names. */
 	char* shstrtab = &buffer.data[shstrtab_offset];
-	for (int32_t i = 0; i < ARRAY_SIZE(section_names); i++)
+	for (s32 i = 0; i < ARRAY_SIZE(section_names); i++)
 	{
 		strcpy(shstrtab, section_names[i]);
 		shstrtab += strlen(section_names[i]);
@@ -596,7 +596,7 @@ static Buffer build_object_file(SymbolTable* table, int32_t relocation_count)
 	
 	/* Fill in the section headers. */
 	ElfSectionHeader* section_headers = (ElfSectionHeader*) &buffer.data[section_headers_offset];
-	for (int32_t i = 1; i < ARRAY_SIZE(section_names); i++)
+	for (s32 i = 1; i < ARRAY_SIZE(section_names); i++)
 	{
 		section_headers[i].name = section_headers[i - 1].name + strlen(section_names[i - 1]) + 1;
 		section_headers[i].type = sections[i].type;
@@ -612,9 +612,9 @@ static Buffer build_object_file(SymbolTable* table, int32_t relocation_count)
 	char* strtab = &buffer.data[strtab_offset];
 	
 	ElfSymbol* symbol = symtab + 1;
-	int32_t name_offset = 1;
+	s32 name_offset = 1;
 	
-	for (int32_t i = 0; i < table->symbol_count; i++)
+	for (s32 i = 0; i < table->symbol_count; i++)
 	{
 		if (table->symbols[i].used && !table->symbols[i].overlay)
 		{
