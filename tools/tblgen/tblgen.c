@@ -66,7 +66,7 @@ ColumnName column_names[] = {
 };
 
 static SymbolTable parse_table(Buffer input);
-static u32 parse_table_header(Buffer input, SymbolTable* table, Column* columns);
+static u32 parse_table_header(const char** p, SymbolTable* table, Column* columns);
 static u32 parse_object_file(SymbolTable* table, Buffer object);
 static void map_symbols_to_runtime_indices(SymbolTable* table);
 static void print_table(SymbolTable* table);
@@ -132,11 +132,13 @@ static SymbolTable parse_table(Buffer input)
 	
 	Column columns[MAX_COLUMNS];
 	
+	const char* ptr = input.data;
+	
 	/* First we iterate over all of the headings and record information about
 	   what is stored in each of the columns, and how each of the levels relate
 	   to the overlays. */
-	u32 column_count = parse_table_header(input, &table, columns);
-	const char* ptr = input.data;
+	u32 column_count = parse_table_header(&ptr, &table, columns);
+	
 	/* Each remaining line in the table file will be a symbol. */
 	const char* backup_ptr = ptr;
 	while (ptr < input.data + input.size)
@@ -272,12 +274,12 @@ static SymbolTable parse_table(Buffer input)
 	return table;
 }
 
-static u32 parse_table_header(Buffer input, SymbolTable* table, Column* columns)
+static u32 parse_table_header(const char** p, SymbolTable* table, Column* columns)
 {
-	const char* ptr = input.data;
+	const char* ptr = *p;
 	u32 column = 0;
 	
-	while (ptr < input.data + input.size && *ptr != '\n')
+	while (*ptr != '\0' && *ptr != '\n')
 	{
 		CHECK(column < MAX_COLUMNS, "Too many columns.\n");
 		
@@ -369,7 +371,9 @@ static u32 parse_table_header(Buffer input, SymbolTable* table, Column* columns)
 	}
 	
 	CHECK(*ptr++ == '\n', "Unexpected end of input table file.\n");
-
+	
+	*p = ptr;
+	
 	return column;
 }
 
