@@ -2,6 +2,7 @@
 #include <racdoor/elf.h>
 #include <racdoor/util.h>
 
+#include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -13,6 +14,10 @@ typedef struct {
 	ElfSymbolType type;
 	u32 size;
 	u32 core_address;
+	u32 spcore_address;
+	u32 mpcore_address;
+	u32 frontend_address;
+	u32 frontbin_address;
 	u32 overlay_addresses[MAX_OVERLAYS];
 	s32 runtime_index;
 	s8 overlay;
@@ -29,7 +34,39 @@ typedef struct {
 	u32 symbol_count;
 } SymbolTable;
 
+typedef enum {
+	COLUMN_NAME, /* Symbol name. This should be a non-mangled C identifier. */
+	COLUMN_TYPE, /* ELF symbol type. */
+	COLUMN_COMMENT, /* Ignored. */
+	COLUMN_SIZE, /* Size in bytes. */
+	COLUMN_CORE, /* Address in a core section from the ELF. These are always loaded. */
+	COLUMN_SPCORE, /* UYA specific. Address in a core section from the singleplayer ELF. */
+	COLUMN_MPCORE, /* UYA specific. Address in a core section from the multiplayer ELF. */
+	COLUMN_FRONTEND, /* Address in the main menu overlay from the ELF. */
+	COLUMN_FRONTBIN, /* Address in the main menu overlay from MISC.WAD. */
+	COLUMN_FIRST_OVERLAY, /* Address in a level overlay from the LEVEL*.WAD files. */
+	MAX_COLUMNS = 100
+} Column;
+
+typedef struct {
+	u32 column;
+	const char* string;
+} ColumnName;
+
+ColumnName column_names[] = {
+	{COLUMN_NAME    , "NAME"    },
+	{COLUMN_TYPE    , "TYPE"    },
+	{COLUMN_COMMENT , "COMMENT" },
+	{COLUMN_SIZE    , "SIZE"    },
+	{COLUMN_CORE    , "CORE"    },
+	{COLUMN_SPCORE  , "SPCORE"  },
+	{COLUMN_MPCORE  , "MPCORE"  },
+	{COLUMN_FRONTEND, "FRONTEND"},
+	{COLUMN_FRONTBIN, "FRONTBIN"}
+};
+
 static SymbolTable parse_table(Buffer input);
+static u32 parse_table_header(Buffer input, SymbolTable* table, Column* columns);
 static u32 parse_object_file(SymbolTable* table, Buffer object);
 static void map_symbols_to_runtime_indices(SymbolTable* table);
 static void print_table(SymbolTable* table);
@@ -88,77 +125,18 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-typedef enum {
-	COLUMN_NAME,
-	COLUMN_COMMENT,
-	COLUMN_TYPE,
-	COLUMN_SIZE,
-	COLUMN_CORE,
-	COLUMN_FIRST_OVERLAY,
-	MAX_COLUMNS = 100
-} Columns;
-
 static SymbolTable parse_table(Buffer input)
 {
 	SymbolTable table = {};
 	memset(table.levels, 0xff, sizeof(table.levels));
 	
-	const char* ptr = input.data;
-	u32 column = 0, column_count = 0;
-	int seen_name_column = 0;
-	
-	Columns columns[MAX_COLUMNS];
+	Column columns[MAX_COLUMNS];
 	
 	/* First we iterate over all of the headings and record information about
 	   what is stored in each of the columns, and how each of the levels relate
 	   to the overlays. */
-	while (ptr < input.data + input.size)
-	{
-		if (ptr == input.data || *(ptr - 1) == ',')
-		{
-			CHECK(column < MAX_COLUMNS, "Too many columns.\n");
-			
-			if (strncmp(ptr, "NAME", 4) == 0)
-			{
-				columns[column] = COLUMN_NAME;
-				seen_name_column = 1;
-			}
-			else if (strncmp(ptr, "COMMENT", 7) == 0)
-				columns[column] = COLUMN_COMMENT;
-			else if (strncmp(ptr, "TYPE", 4) == 0)
-				columns[column] = COLUMN_TYPE;
-			else if (strncmp(ptr, "SIZE", 4) == 0)
-				columns[column] = COLUMN_SIZE;
-			else if (strncmp(ptr, "CORE", 4) == 0)
-				columns[column] = COLUMN_CORE;
-			else
-			{
-				columns[column] = COLUMN_FIRST_OVERLAY + table.overlay_count;
-				
-				/* TODO: Support multiple levels that use the same overlay. */
-				char* end = NULL;
-				u32 level = strtoul(ptr, &end, 10);
-				CHECK(end != ptr && level < MAX_LEVELS, "Invalid column heading.\n");
-				
-				table.levels[level] = (u8) table.overlay_count;
-				table.level_count = MAX(level + 1, table.level_count);
-				table.overlay_count++;
-			}
-			
-			column++;
-		}
-		
-		if (*ptr == '\n')
-			break;
-		
-		ptr++;
-	}
-	
-	column_count = column;
-	
-	CHECK(*ptr++ == '\n', "Unexpected end of input table file.\n");
-	CHECK(seen_name_column != -1, "No NAME column.\n");
-	
+	u32 column_count = parse_table_header(input, &table, columns);
+	const char* ptr = input.data;
 	/* Each remaining line in the table file will be a symbol. */
 	const char* backup_ptr = ptr;
 	while (ptr < input.data + input.size)
@@ -170,6 +148,7 @@ static SymbolTable parse_table(Buffer input)
 	memset(table.symbols, 0, table.symbol_count * sizeof(Symbol));
 	
 	u32 symbol = 0;
+	u32 column = 0;
 	
 	/* Finally we iterate over each of the symbols and fill in all the names,
 	   sizes, and addresses from the rows in the CSV file. */
@@ -293,6 +272,107 @@ static SymbolTable parse_table(Buffer input)
 	return table;
 }
 
+static u32 parse_table_header(Buffer input, SymbolTable* table, Column* columns)
+{
+	const char* ptr = input.data;
+	u32 column = 0;
+	
+	while (ptr < input.data + input.size && *ptr != '\n')
+	{
+		CHECK(column < MAX_COLUMNS, "Too many columns.\n");
+		
+		int quoted = 0;
+		if (*ptr == '"')
+		{
+			quoted = 1;
+			ptr++;
+		}
+		
+		int done = 0;
+		for (u32 i = 0; i < ARRAY_SIZE(column_names); i++)
+		{
+			if (strncmp(ptr, column_names[i].string, strlen(column_names[i].string)) == 0)
+			{
+				columns[column] = column_names[i].column;
+				ptr += strlen(column_names[i].string);
+				done = 1;
+				break;
+			}
+		}
+		
+		if (!done)
+		{
+			columns[column] = COLUMN_FIRST_OVERLAY + table->overlay_count;
+			
+			char* end = NULL;
+			u32 first, last;
+			char opening = *ptr;
+			
+			switch (opening)
+			{
+				case '[': /* Closed interval. */
+					ptr++;
+					
+					first = strtoul(ptr, &end, 10);
+					CHECK(end != ptr && first < MAX_LEVELS, "Invalid interval column heading (bad level number).\n");
+					ptr = end;
+					
+					CHECK(*ptr++ == ',', "Invalid interval column heading (missing comma).\n");
+					
+					last = strtoul(ptr, &end, 10);
+					CHECK(end != ptr && last < MAX_LEVELS && first < last, "Invalid interval column heading (bad level number).\n");
+					ptr = end;
+					
+					CHECK(*ptr++ == ']', "Invalid interval column heading (missing closing bracket).");
+					
+					for (u32 i = first; i <= last; i++)
+						table->levels[i] = (u8) table->overlay_count;
+					
+					table->level_count = MAX(table->level_count, last);
+					
+					break;
+				case '{': /* Set. */
+					do
+					{
+						ptr++;
+						
+						u32 level = strtoul(ptr, &end, 10);
+						CHECK(end != ptr && level < MAX_LEVELS, "Invalid set column heading (bad level number).\n");
+						ptr = end;
+						
+						table->levels[level] = (u8) table->overlay_count;
+						table->level_count = MAX(table->level_count, level);
+					} while (*ptr == ',');
+					
+					CHECK(*ptr++ == '}', "Invalid set column heading (missing closing bracket).\n");
+					
+					break;
+				default: /* Scalar. */
+					first = strtoul(ptr, &end, 10);
+					CHECK(end != ptr && first < MAX_LEVELS, "Invalid scalar column heading (bad level number).\n");
+					ptr = end;
+					
+					table->levels[first] = (u8) table->overlay_count;
+					table->level_count = MAX(table->level_count, first + 1);
+			}
+			
+			table->overlay_count++;
+		}
+		
+		if (quoted)
+			CHECK(*ptr++ == '"', "Unexpected characters in table header.\n");
+		
+		if (*ptr == ',')
+			ptr++;
+		
+		column++;
+	}
+	
+	CHECK(*ptr++ == '\n', "Unexpected end of input table file.\n");
+
+	return column;
+}
+
 static u32 parse_object_file(SymbolTable* table, Buffer object)
 {
 	ElfFileHeader* header = buffer_get(object, 0, sizeof(ElfFileHeader), "ELF header");
@@ -389,11 +469,17 @@ static void map_symbols_to_runtime_indices(SymbolTable* table)
 
 static void print_table(SymbolTable* table)
 {
-	printf("%d overlays\n", table->overlay_count);
-	printf("\n");
-	printf("%d levels:\n", table->level_count);
-	for (u32 i = 0; i < table->level_count; i++)
-		printf("  [%d] = %d\n", i, table->levels[i]);
+	printf("%d overlays:\n", table->overlay_count);
+	for(u32 i = 0; i < table->overlay_count; i++)
+	{
+		printf("  %d: ", i);
+		int printed = 0;
+		for(u32 j = 0; j < table->level_count; j++)
+			if (table->levels[j] == i)
+				printed = printf("%s%d", printed ? ", " : "", j);
+		printf("\n");
+	}
+	
 	printf("\n");
 	printf("%d symbols:\n", table->symbol_count);
 	for (u32 i = 0; i < table->symbol_count; i++)
