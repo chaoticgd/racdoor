@@ -585,10 +585,10 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count)
 	header->shstrndx = 5; /* .shstrtab */
 	
 	/* Fill in the runtime linking table. */
-	*(u32*) &buffer.data[addrtbl_header_offset] = addrtbl_header_size | (dynamic_symbol_count << 8);
-	u8* addrtbl_levels = (u8*) &buffer.data[addrtbl_header_offset + 4];
+	u8* addrtbl_head = (u8*)  &buffer.data[addrtbl_header_offset] ;
+	*(u32*) addrtbl_head = addrtbl_header_size | (dynamic_symbol_count << 8);
 	for (u32 i = 4; i < addrtbl_header_size; i++)
-		addrtbl_levels[i] = (u8) table->levels[i - 4];
+		addrtbl_head[i] = (u8) table->levels[i - 4];
 	
 	u32* addrtbl_data = (u32*) &buffer.data[addrtbl_data_offset];
 	for (u32 i = 0; i < table->overlay_count; i++)
