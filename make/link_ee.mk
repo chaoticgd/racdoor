@@ -8,14 +8,14 @@ MAPS := $(patsubst %,$(BIN).%.map,$(basename $(SERIALS)))
 # overlay symbols.
 .PRECIOUS: $(BIN).%.tbl
 $(BIN).%.tbl: $(TBLGEN) $(OBJS) $(PROJECTDIR)/tables/output/%.csv
-	$(TBLGEN) $(OBJS) -t $(PROJECTDIR)/tables/output/$*.csv -s $* -o $@ -v
+	$(TBLGEN) $(OBJS) $(LIBS) -t $(PROJECTDIR)/tables/output/$*.csv -s $* -o $@ -v
 
 # Perform partial linking with the -r option passed to GNU ld. This will combine
 # together the sections from the object files given as input but it will not
 # apply relocations for external symbols.
 .PRECIOUS: $(BIN).%.elf
 $(BIN).%.elf: $(OBJS) $(BIN).%.tbl $(PROJECTDIR)/linkfile.ld
-	$(CC) $(OBJS) $(BIN).$*.tbl -o $@ -nostdlib -Wl,-r,-T,$(PROJECTDIR)/linkfile.ld,-Map,$(BIN).$*.map
+	$(CC) $(OBJS) $(LIBS) $(BIN).$*.tbl -o $@ -nostdlib -Wl,-r,-T,$(PROJECTDIR)/linkfile.ld,-Map,$(BIN).$*.map
 
 # Apply relocations for static symbols and copy relocations for dynamic symbols
 # into the .racdoor.relocs section so that they can be applied at runtime.

@@ -1,6 +1,7 @@
 # Toolchain
 CC = gcc
 CXX = g++
+AR = ar
 
 # Racdoor tools
 RACDOOR =

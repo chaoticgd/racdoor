@@ -1,6 +1,7 @@
 # Toolchain
 CC = ee-gcc
 CXX = ee-g++
+AR = ee-ar
 
 # Racdoor tools
 CSVMERGE = $(PROJECTDIR)/tools/csvmerge/csvmerge

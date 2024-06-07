@@ -67,6 +67,7 @@ ColumnName column_names[] = {
 
 static SymbolTable parse_table(Buffer input);
 static u32 parse_table_header(const char** p, SymbolTable* table, Column* columns);
+static u32 parse_archive_file(SymbolTable* table, Buffer archive);
 static u32 parse_object_file(SymbolTable* table, Buffer object);
 static void map_symbols_to_runtime_indices(SymbolTable* table);
 static void print_table(SymbolTable* table);
@@ -78,8 +79,9 @@ static char* string_section; /* Used by symbolmap_comparator. */
 
 int main(int argc, char** argv)
 {
-	Buffer* input_objects = checked_malloc(argc * sizeof(Buffer));
-	u32 input_object_count = 0;
+	Buffer* input_files = checked_malloc(argc * sizeof(Buffer));
+	const char** input_file_paths = checked_malloc(argc * sizeof(const char*));
+	u32 input_file_count = 0;
 	Buffer input_table = {};
 	const char* serial = NULL;
 	const char* output_object_path = NULL;
@@ -97,11 +99,15 @@ int main(int argc, char** argv)
 		else if (strcmp(argv[i], "-v") == 0)
 			verbose = 1;
 		else
-			input_objects[input_object_count++] = read_file(argv[i]);
+		{
+			input_files[input_file_count] = read_file(argv[i]);
+			input_file_paths[input_file_count] = argv[i];
+			input_file_count++;
+		}
 	}
 	
-	CHECK(input_object_count && input_table.data && serial && output_object_path,
-		"usage: %s <input objects...> -t <input table> -s <serial> -o <output object> [-v]\n",
+	CHECK(input_file_count && input_table.data && serial && output_object_path,
+		"usage: %s <input archives and objects...> -t <input table> -s <serial> -o <output object> [-v]\n",
 		(argc > 0) ? argv[0] : "tblgen");
 	
 	/* Parse the input CSV file into a symbol table in memory. */
@@ -110,8 +116,13 @@ int main(int argc, char** argv)
 	/* Check which symbols are actually referenced by the object files being
 	   built so we can omit the rest of them from the build later. */
 	u32 relocation_count = 0;
-	for (u32 i = 0; i < input_object_count; i++)
-		relocation_count += parse_object_file(&table, input_objects[i]);
+	for (u32 i = 0; i < input_file_count; i++)
+		if (strncmp(input_files[i].data, "!<arch>\n", 8) == 0)
+			relocation_count += parse_archive_file(&table, input_files[i]);
+		else if (strncmp(input_files[i].data, "\x7f" "ELF", 4) == 0)
+			relocation_count += parse_object_file(&table, input_files[i]);
+		else
+			ERROR("Cannot determine type of input file '%s'.\n", input_file_paths[i]);
 	
 	/* Determine where each symbol lives in the runtime address table and count
 	   the number of symbols to be included. */
@@ -385,6 +396,49 @@ static u32 parse_table_header(const char** p, SymbolTable* table, Column* column
 	*p = ptr;
 	
 	return column;
+}
+
+typedef struct {
+	char identifier[16];
+	char modified[12];
+	char owner[6];
+	char group[6];
+	char mode[8];
+	char file_size[10];
+	char end[2];
+} ArchiveHeader;
+
+static u32 parse_archive_file(SymbolTable* table, Buffer archive)
+{
+	CHECK(strncmp(archive.data, "!<arch>\n", 8) == 0, "Invalid archive header.\n");
+	archive.data += 8;
+	archive.size -= 8;
+	
+	while (archive.size > 0)
+	{
+		CHECK(archive.size >= sizeof(ArchiveHeader), "Invalid archive (unexpected end of file).\n");
+		
+		ArchiveHeader* header = (ArchiveHeader*) archive.data;
+		archive.data += sizeof(ArchiveHeader);
+		archive.size -= sizeof(ArchiveHeader);
+		
+		u32 file_size = atoi(header->file_size);
+		
+		char* identifier_end = (char*) memchr(header->identifier, '/', sizeof(header->identifier));
+		CHECK(identifier_end, "Corrupted archive (invalid identifier).\n");
+		
+		char identifier[16];
+		memcpy(identifier, header->identifier, identifier_end - header->identifier);
+		identifier[identifier_end - header->identifier] = '\0';
+		
+		/* Skip over the global symbol table. */
+		if (strcmp(identifier, "") != 0)
+			parse_object_file(table, archive);
+		
+		CHECK(archive.size >= file_size);
+		archive.data += file_size;
+		archive.size -= file_size;
+	}
 }
 
 static u32 parse_object_file(SymbolTable* table, Buffer object)

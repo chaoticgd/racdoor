@@ -1,7 +1,8 @@
 PROJECTDIR = ../..
 
 BIN = hello
-SRCS = hello.cpp $(PROJECTDIR)/sdk/linker.c $(PROJECTDIR)/sdk/hook.c
+SRCS = hello.cpp
+LIBS = $(PROJECTDIR)/sdk/sdk.$(TARGET).a
 
 SERIALS = SCES-53285
 

@@ -4,6 +4,7 @@
 !*.*
 
 # Ignore specific file types.
+*.a
 *.d
 *.elf
 *.map
