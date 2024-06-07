@@ -13,7 +13,7 @@ BIN_FROM_RDX = $(patsubst $(BIN).%.rdx,$(BIN).%.elf,$@)
 # overlay symbols.
 .PRECIOUS: $(BIN).%.tbl
 $(BIN).%.tbl: $(TBLGEN) $(OBJS) $(PROJECTDIR)/tables/output/%.csv
-	$(TBLGEN) $(OBJS) -t $(PROJECTDIR)/tables/output/$(SERIAL_FROM_TABLE).csv -o $@ -v
+	$(TBLGEN) $(OBJS) -t $(PROJECTDIR)/tables/output/$(SERIAL_FROM_TABLE).csv -s $* -o $@ -v
 
 # Perform partial linking with the -r option passed to GNU ld. This will combine
 # together the sections from the object files given as input but it will not
