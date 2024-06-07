@@ -3,6 +3,7 @@ CC = ee-gcc
 CXX = ee-g++
 
 # Racdoor tools
+CSVMERGE = $(PROJECTDIR)/tools/csvmerge/csvmerge
 RACDOOR = $(PROJECTDIR)/racdoor/racdoor
 RDXGEN = $(PROJECTDIR)/tools/rdxgen/rdxgen
 TBLGEN = $(PROJECTDIR)/tools/tblgen/tblgen
