@@ -223,8 +223,6 @@ static SymbolTable parse_table(Buffer input)
 							ptr++;
 						
 						break;
-					case COLUMN_SIZE:
-					case COLUMN_CORE:
 					default:
 					{
 						if (*ptr == ',')
@@ -238,8 +236,16 @@ static SymbolTable parse_table(Buffer input)
 						
 						if (columns[column] == COLUMN_SIZE)
 							table.symbols[symbol].size = value;
-						if (columns[column] == COLUMN_CORE)
+						else if (columns[column] == COLUMN_CORE)
 							table.symbols[symbol].core_address = value;
+						else if (columns[column] == COLUMN_SPCORE)
+							table.symbols[symbol].spcore_address = value;
+						else if (columns[column] == COLUMN_MPCORE)
+							table.symbols[symbol].mpcore_address = value;
+						else if (columns[column] == COLUMN_FRONTEND)
+							table.symbols[symbol].frontend_address = value;
+						else if (columns[column] == COLUMN_FRONTBIN)
+							table.symbols[symbol].frontbin_address = value;
 						else
 						{
 							u32 overlay = columns[column] - COLUMN_FIRST_OVERLAY;
@@ -248,7 +254,6 @@ static SymbolTable parse_table(Buffer input)
 							table.symbols[symbol].overlay_addresses[overlay] = value;
 							table.symbols[symbol].overlay = 1;
 							
-							/* Make sure only a single address is supplied. */
 							CHECK(table.symbols[symbol].core_address == 0,
 								"Symbol '%s' has multiple addresses in the CSV file.\n",
 								table.symbols[symbol].name);
