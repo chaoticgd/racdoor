@@ -466,13 +466,12 @@ static void map_symbols_to_runtime_indices(SymbolTable* table)
 	s32 next_index = 0;
 	for (u32 i = 0; i < table->symbol_count; i++)
 	{
-		if (table->symbols[i].used)
+		if (table->symbols[i].used && table->symbols[i].overlay)
 		{
-			if (table->symbols[i].overlay)
-				table->symbols[i].runtime_index = next_index++;
-			else
-				table->symbols[i].runtime_index = -1;
+			table->symbols[i].runtime_index = next_index++;
+			continue;
 		}
+		table->symbols[i].runtime_index = -1;
 	}
 }
 
