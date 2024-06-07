@@ -25,6 +25,7 @@ typedef double f64;
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 
 #ifdef _EE
+	#define NULL ((void*) 0)
 	#define ERROR(...) __builtin_trap();
 #else
 	#define ERROR(...) do { fprintf(stderr, "ERROR: " __VA_ARGS__); exit(1); } while(0);
