@@ -74,9 +74,8 @@ SECTIONS
 		*(.racdoor.addrtbl)
 	}
 	
-	/* Runtime relocation table. This is filled in while racdoor is packing the
-	   final ELF into the save game and only contains relocations that are
-	   needed for linking against the level overlays. */
+	/* Runtime relocation table. This is filled in by rdxprep and only contains
+	   relocations that are needed for linking against the level overlays. */
 	.racdoor.relocs :
 	{
 		_racdoor_relocs = .;

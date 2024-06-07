@@ -1,9 +1,9 @@
 PROJECTDIR = ../..
 
-BIN = rdxgen
-SRCS = rdxgen.c $(PROJECTDIR)/sdk/linker.c
+BIN = rdxprep
+SRCS = rdxprep.c $(PROJECTDIR)/sdk/linker.c
 
-host: rdxgen
+host: rdxprep
 ee:
 clean: compileclean linkclean
 

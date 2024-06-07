@@ -45,7 +45,7 @@ u32 lookup_runtime_symbol_index(const char* name, Buffer symbolmap);
 
 int main(int argc, char** argv)
 {
-	CHECK(argc == 3, "usage: %s <input elf> <output rdx>", (argc > 0) ? argv[0] : "rdxgen");
+	CHECK(argc == 3, "usage: %s <input elf> <output rdx>", (argc > 0) ? argv[0] : "rdxprep");
 	
 	const char* input_elf_path = argv[1];
 	const char* output_rdx_path = argv[2];

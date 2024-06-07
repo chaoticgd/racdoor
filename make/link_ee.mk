@@ -19,8 +19,8 @@ $(BIN).%.elf: $(OBJS) $(BIN).%.tbl $(PROJECTDIR)/linkfile.ld
 
 # Apply relocations for static symbols and copy relocations for dynamic symbols
 # into the .racdoor.relocs section so that they can be applied at runtime.
-$(BIN).%.rdx: $(RDXGEN) $(BIN).%.elf
-	$(RDXGEN) $(BIN).$*.elf $@
+$(BIN).%.rdx: $(RDXPREP) $(BIN).%.elf
+	$(RDXPREP) $(BIN).$*.elf $@
 
 .PHONY: $(BIN)
 $(BIN): $(RDXS)
