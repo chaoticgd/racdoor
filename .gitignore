@@ -1,3 +1,8 @@
+# Ignore all files without an extension.
+*
+!*.*
+
+# Ignore specific file types.
 *.d
 *.elf
 *.map
@@ -5,3 +10,6 @@
 *.rdx
 *.secret
 *.tbl
+
+# Ignore specific directories.
+/tables/output
