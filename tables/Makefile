@@ -18,7 +18,8 @@ ee: $(OUTPUTS)
 clean:
 	$(RM) -r output
 
-output/%.csv: $(CSVMERGE) $(wildcard *.%.csv)
+.SECONDEXPANSION:
+output/%.csv: $(CSVMERGE) $$(wildcard *.%.csv)
 	$(CSVMERGE) $(wildcard *.$*.csv) -o $@
 
 include $(PROJECTDIR)/make/config_$(TARGET).mk
