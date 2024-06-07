@@ -37,7 +37,7 @@ void uninstall_hook(FuncHook* hook)
 	
 	/* Restore original instructions. */
 	hook->original_func[0] = hook->original_insns[0];
-	hook->original_func[1] = hook->original_insns[0];
+	hook->original_func[1] = hook->original_insns[1];
 	
 	/* Flush the instruction cache. */
 	FlushCache(2);
