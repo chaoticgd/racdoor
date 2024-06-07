@@ -1,7 +1,7 @@
 # Disable implicit rules.
 MAKEFLAGS += -r
 
-SUBDIRS = sdk tools tables racdoor payloads
+SUBDIRS = sdk tools tables racdoor samples
 
 all: host ee
 
