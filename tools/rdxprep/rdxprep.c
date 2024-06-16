@@ -6,7 +6,7 @@
 #include <string.h>
 
 typedef struct {
-	u32 address;
+	ElfSectionHeader* header;
 	Buffer buffer;
 } ElfSection;
 
@@ -91,17 +91,17 @@ ElfSections parse_elf_sections(Buffer elf, ElfFileHeader* header)
 			
 			CHECK(sections[i].info < header->shnum, "Relocation section has invalid info field.\n");
 			ElfSectionHeader* target = &sections[sections[i].info];
-			output->target.address = target->addr;
+			output->target.header = target;
 			output->target.buffer = sub_buffer(elf, target->offset, target->size, "section to be relocated");
 			
 			CHECK(sections[i].link < header->shnum, "Relocation section has invalid link field.\n");
 			ElfSectionHeader* symtab = &sections[sections[i].link];
-			output->symtab.address = symtab->addr;
+			output->symtab.header = symtab;
 			output->symtab.buffer = sub_buffer(elf, symtab->offset, symtab->size, "linked symbol table section");
 			
 			CHECK(symtab->link < header->shnum, "Symbol table section has invalid link field.\n");
 			ElfSectionHeader* strtab = &sections[symtab->link];
-			output->strtab.address = strtab->addr;
+			output->strtab.header = strtab;
 			output->strtab.buffer = sub_buffer(elf, strtab->offset, strtab->size, "linked string table section");
 		}
 		else
@@ -117,9 +117,8 @@ ElfSections parse_elf_sections(Buffer elf, ElfFileHeader* header)
 			if (!output)
 				continue;
 			
-			output->address = sections[i].addr;
-			output->buffer.data = buffer_get(elf, sections[i].offset, sections[i].size, "section data");
-			output->buffer.size = sections[i].size;
+			output->header = &sections[i];
+			output->buffer = sub_buffer(elf, sections[i].offset, sections[i].size, "section data");
 		}
 	}
 	
@@ -135,6 +134,8 @@ void process_relocations(ElfSections* sections)
 	RacdoorRelocation* reloc_end = (RacdoorRelocation*) (sections->racdoor_relocs.buffer.data + sections->racdoor_relocs.buffer.size);
 	
 	CHECK(reloc_out, "Missing .racdoor.relocs section.\n");
+	
+	u32 dynamic_relocation_count = 0;
 	
 	/* Iterate over all the SHT_REL sections e.g. .rel.text, .rel.data, etc. */
 	for (u32 i = 0; i < sections->reloc_section_count; i++)
@@ -177,7 +178,7 @@ void process_relocations(ElfSections* sections)
 				u32 runtime_index = lookup_runtime_symbol_index(name, sections->racdoor_symbolmap.buffer);
 				
 				CHECK(reloc_out < reloc_end, "Not enough space for relocations.\n");
-				reloc_out->address = section->target.address + reloc_in->offset;
+				reloc_out->address = section->target.header->addr + reloc_in->offset;
 				reloc_out->info = type | (runtime_index << 8);
 				reloc_out++;
 				
@@ -185,9 +186,13 @@ void process_relocations(ElfSections* sections)
 				   can't handle. */
 				u32 dummy;
 				apply_relocation(&dummy, type, 0);
+				
+				dynamic_relocation_count++;
 			}
 		}
 	}
+	
+	sections->racdoor_relocs.header->addr = dynamic_relocation_count * sizeof(RacdoorRelocation);
 }
 
 u32 lookup_runtime_symbol_index(const char* name, Buffer symbolmap)
