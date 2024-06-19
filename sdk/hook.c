@@ -4,6 +4,8 @@
 
 static FuncHook* hook_head;
 
+void FlushCache(int mode);
+
 void install_hook(FuncHook* hook, void* original_func, void* replacement_func)
 {
 	/* Add to the list. */

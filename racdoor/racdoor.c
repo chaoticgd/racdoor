@@ -48,9 +48,12 @@ int32_t build_count = sizeof(builds) / sizeof(Build);
 // **** Save format ****
 
 enum SaveBlockType {
+	BLOCK_Level = 0,
 	BLOCK_HelpDataMessages = 16,
 	BLOCK_HelpDataMisc = 17,
 	BLOCK_HelpDataGadgets = 18,
+	BLOCK_HelpVoiceOn = 28,
+	BLOCK_HelpTextOn = 29,
 	BLOCK_HelpLog = 1010,
 	BLOCK_HelpLogPos = 1011,
 	BLOCK_g_HeroGadgetBox = 7008
@@ -90,8 +93,13 @@ uint32_t convert_elf(char* output, int32_t output_size, Buffer elf);
 
 // **** Save parser ****
 
-#define MAX_BLOCKS 32
-#define MAX_LEVELS 32
+#define MAX_BLOCKS 64
+#define MAX_LEVELS 64
+
+#define RAC_GAME_BLOCK_COUNT 47
+#define GC_GAME_BLOCK_COUNT 37
+#define UYA_GAME_BLOCK_COUNT 40
+#define DL_GAME_BLOCK_COUNT 29
 
 typedef struct {
 	SaveChecksum* checksum;
@@ -114,7 +122,9 @@ SaveBlock* lookup_block(SaveSlotBlockList* list, int32_t type);
 
 // **** Save game mutator ****
 
-void mutate_save_game(SaveSlot* save, Buffer elf, Addresses* addresses);
+void mutate_rac_save_game(SaveSlot* save, Buffer elf, Addresses* addresses);
+void mutate_uya_save_game(SaveSlot* save, Buffer elf, Addresses* addresses);
+void mutate_dl_save_game(SaveSlot* save, Buffer elf, Addresses* addresses);
 
 int main(int argc, char** argv)
 {
@@ -131,10 +141,59 @@ int main(int argc, char** argv)
 	Buffer elf = read_file(input_rdx_path);
 	
 	Addresses addresses = builds[0].addresses;
-	mutate_save_game(&save, elf, &addresses);
+	switch (save.game.block_count)
+	{
+		case RAC_GAME_BLOCK_COUNT:
+			mutate_rac_save_game(&save, elf, &addresses);
+			break;
+		case GC_GAME_BLOCK_COUNT:
+			printf("nop\n");
+			break;
+		case UYA_GAME_BLOCK_COUNT:
+			printf("nop\n");
+			break;
+		case DL_GAME_BLOCK_COUNT:
+			mutate_dl_save_game(&save, elf, &addresses);
+			break;
+		default: ERROR("Unexpected block count.\n");
+	}
 	
 	update_checksums(&save);
 	write_file(output_save_path, file);
+}
+
+void mutate_rac_save_game(SaveSlot* save, Buffer elf, Addresses* addresses)
+{
+	u32 mangeboots_help_message = 0x36;
+	u32 quicksel_help_message = 0x50;
+	
+	SaveBlock* level = lookup_block(&save->game, BLOCK_Level);
+	SaveBlock* help_data_messages = lookup_block(&save->game, BLOCK_HelpDataMessages);
+	SaveBlock* help_data_gadgets = lookup_block(&save->game, BLOCK_HelpDataGadgets);
+	SaveBlock* help_data_misc = lookup_block(&save->game, BLOCK_HelpDataMisc);
+	SaveBlock* voice_on = lookup_block(&save->game, BLOCK_HelpVoiceOn);
+	SaveBlock* text_on = lookup_block(&save->game, BLOCK_HelpTextOn);
+	SaveBlock* help_log = lookup_block(&save->game, BLOCK_HelpLog);
+	SaveBlock* help_log_pos = lookup_block(&save->game, BLOCK_HelpLogPos);
+	
+	return;
+	
+	// probalby won't work on real HW
+	uint32_t ofs = /*0x0015f444*/(0xa0000000+0x0015f444) - 0x00141e08;
+	*(int*) help_log_pos->data = ofs;
+	
+	for (int i = 0; i < help_data_messages->size; i++)
+		help_data_messages->data[i] = 0;
+	
+	for (int i = 0; i < help_data_gadgets->size; i++)
+		help_data_gadgets->data[i] = 0;
+	
+	for (int i = 0; i < help_data_misc->size; i++)
+		help_data_misc->data[i] = 0;
+	
+	// disable
+	for (int i = 0x36 * 0x8; i < 0x37 * 0x8; i++)
+		help_data_messages->data[i] = 0xff;
 }
 
 // (maxlevel+1)*sizeof(StackFixup) == 75*56 == 4200 == sizeof(HelpLog)
@@ -144,12 +203,14 @@ typedef struct {
 	uint32_t data[11];
 } StackFixup;
 
-void mutate_save_game(SaveSlot* save, Buffer elf, Addresses* addresses)
+void mutate_dl_save_game(SaveSlot* save, Buffer elf, Addresses* addresses)
 {
 	SaveBlock* help_data_messages = lookup_block(&save->game, BLOCK_HelpDataMessages);
 	SaveBlock* help_data_gadgets = lookup_block(&save->game, BLOCK_HelpDataGadgets);
+	SaveBlock* help_data_misc = lookup_block(&save->game, BLOCK_HelpDataMisc);
 	SaveBlock* help_log = lookup_block(&save->game, BLOCK_HelpLog);
 	SaveBlock* help_log_pos = lookup_block(&save->game, BLOCK_HelpLogPos);
+	
 	SaveBlock* gadget_box = lookup_block(&save->game, BLOCK_g_HeroGadgetBox);
 	
 	// Convert the payload data into the format the game expects, and put it in
@@ -319,7 +380,7 @@ SaveSlotBlockList parse_blocks(Buffer file)
 			break;
 		
 		buffer_get(file, offset, list.blocks[block]->size, "block data");
-		offset = align32(offset + list.blocks[block]->size, 4);
+		offset = ALIGN(offset + list.blocks[block]->size, 4);
 		
 		block++;
 	}
@@ -381,7 +442,7 @@ u32 convert_elf(char* output, s32 output_size, Buffer elf)
 		if (sections[i].addr == 0 || sections[i].size == 0)
 			continue;
 		
-		s32 size = align32(sizeof(RatchetSectionHeader) + sections[i].size, 4);
+		s32 size = ALIGN(sizeof(RatchetSectionHeader) + sections[i].size, 4);
 		CHECK(size >= 0 && size_left >= size, "ELF too big!\n");
 		
 		RatchetSectionHeader* output_header = (RatchetSectionHeader*) output;

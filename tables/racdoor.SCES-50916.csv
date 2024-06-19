@@ -1,0 +1,12 @@
+NAME,TYPE,COMMENT,SIZE,CORE,FRONTEND,FRONTBIN,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18
+_racdoor_initial_hook,NOTYPE,snd_FlushSoundCommands,,12de28,,,,,,,,,,,,,,,,,,,,,
+_racdoor_return_to_game,NOTYPE,snd_FlushSoundCommands,,12de3c,,,,,,,,,,,,,,,,,,,,,
+_racdoor_original_instruction,NOTYPE,"bne $v0, $zero, 0x0012de3c",,14400004,,,,,,,,,,,,,,,,,,,,,
+_racdoor_trampoline,NOTYPE,HelpLog,,141e08,,,,,,,,,,,,,,,,,,,,,
+_racdoor_trampoline_offset,NOTYPE,HelpLog,,34,,,,,,,,,,,,,,,,,,,,,
+_racdoor_trampoline_block,NOTYPE,HelpLog,,3f2,,,,,,,,,,,,,,,,,,,,,
+_racdoor_decryptor,NOTYPE,MetalDetector,,14bf10,,,,,,,,,,,,,,,,,,,,,
+_racdoor_decryptor_block,NOTYPE,MetalDetector,,bc0,,,,,,,,,,,,,,,,,,,,,
+_racdoor_image,NOTYPE,MapMask,,141ec0,,,,,,,,,,,,,,,,,,,,,
+_racdoor_image_end,NOTYPE,MapMask,,14bec0,,,,,,,,,,,,,,,,,,,,,
+_racdoor_image_block,NOTYPE,MapMask,,bba,,,,,,,,,,,,,,,,,,,,,

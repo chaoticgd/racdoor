@@ -5,6 +5,7 @@ AR = ee-ar
 
 # Racdoor tools
 CSVMERGE = $(PROJECTDIR)/tools/csvmerge/csvmerge
+INJECT = $(PROJECTDIR)/tools/inject/inject
 RACDOOR = $(PROJECTDIR)/racdoor/racdoor
 RDXPREP = $(PROJECTDIR)/tools/rdxprep/rdxprep
 TBLGEN = $(PROJECTDIR)/tools/tblgen/tblgen

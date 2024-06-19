@@ -192,7 +192,7 @@ void process_relocations(ElfSections* sections)
 		}
 	}
 	
-	sections->racdoor_relocs.header->addr = dynamic_relocation_count * sizeof(RacdoorRelocation);
+	sections->racdoor_relocs.header->size = dynamic_relocation_count * sizeof(RacdoorRelocation);
 }
 
 u32 lookup_runtime_symbol_index(const char* name, Buffer symbolmap)

@@ -207,7 +207,15 @@ static SymbolTable parse_table(Buffer input)
 						string[end - begin] = '\0';
 						
 						if (columns[column] == COLUMN_NAME)
+						{
 							table.symbols[symbol].name = string;
+							
+							/* Some of these symbols are only used by the
+							   injector so we need to make sure they are
+							   retained in the output. */
+							if (strncmp(string, "_racdoor_", 9) == 0)
+								table.symbols[symbol].used = 1;
+						}
 						else
 							table.symbols[symbol].comment = string;
 						
@@ -410,17 +418,15 @@ typedef struct {
 
 static u32 parse_archive_file(SymbolTable* table, Buffer archive)
 {
-	CHECK(strncmp(archive.data, "!<arch>\n", 8) == 0, "Invalid archive header.\n");
-	archive.data += 8;
-	archive.size -= 8;
+	u32 offset = 0;
 	
-	while (archive.size > 0)
+	CHECK(strncmp(archive.data, "!<arch>\n", 8) == 0, "Invalid archive header.\n");
+	offset += 8;
+	
+	while (offset < archive.size)
 	{
-		CHECK(archive.size >= sizeof(ArchiveHeader), "Invalid archive (unexpected end of file).\n");
-		
-		ArchiveHeader* header = (ArchiveHeader*) archive.data;
-		archive.data += sizeof(ArchiveHeader);
-		archive.size -= sizeof(ArchiveHeader);
+		ArchiveHeader* header = buffer_get(archive, offset, sizeof(ArchiveHeader), "archive header");
+		offset += sizeof(ArchiveHeader);
 		
 		u32 file_size = atoi(header->file_size);
 		
@@ -433,11 +439,9 @@ static u32 parse_archive_file(SymbolTable* table, Buffer archive)
 		
 		/* Skip over the global symbol table. */
 		if (strcmp(identifier, "") != 0)
-			parse_object_file(table, archive);
+			parse_object_file(table, sub_buffer(archive, offset, file_size, "archive data"));
 		
-		CHECK(archive.size >= file_size);
-		archive.data += file_size;
-		archive.size -= file_size;
+		offset += ALIGN(file_size, 2);
 	}
 }
 
@@ -445,7 +449,7 @@ static u32 parse_object_file(SymbolTable* table, Buffer object)
 {
 	ElfFileHeader* header = buffer_get(object, 0, sizeof(ElfFileHeader), "ELF header");
 	u32 shstrtab_offset = header->shoff + header->shstrndx * sizeof(ElfSectionHeader);
-	ElfSectionHeader* shstrtab = buffer_get(object, shstrtab_offset, sizeof(ElfSectionHeader), "section header");
+	ElfSectionHeader* shstrtab = buffer_get(object, shstrtab_offset, sizeof(ElfSectionHeader), "shstr section header");
 	
 	/* Find the symbol table section. */
 	ElfSectionHeader* symtab = NULL;
@@ -487,7 +491,7 @@ static u32 parse_object_file(SymbolTable* table, Buffer object)
 	u32 relocation_count = 0;
 	
 	/* Count the number of relocations that will need to be available at runtime
-	   so that we can set create a placeholder section for them. */
+	   so that we can create a placeholder section for them. */
 	for (u32 i = 0; i < header->shnum; i++)
 	{
 		u32 section_offset = header->shoff + i * sizeof(ElfSectionHeader);
@@ -598,7 +602,7 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const 
 	
 	/* Determine the layout of the object file that is to be written out. */
 	u32 file_header_size = sizeof(ElfFileHeader);
-	u32 addrtbl_header_size = align32(4 + table->level_count, 4);
+	u32 addrtbl_header_size = ALIGN(4 + table->level_count, 4);
 	u32 addrtbl_data_size = dynamic_symbol_count * table->overlay_count * 4;
 	u32 relocs_size = relocation_count * sizeof(RacdoorRelocation);
 	u32 symbolmap_head_size = sizeof(RacdoorSymbolMapHead) + dynamic_symbol_count * sizeof(RacdoorSymbolMapEntry);
@@ -606,12 +610,12 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const 
 	for (u32 i = 0; i < table->symbol_count; i++)
 		if (table->symbols[i].used && table->symbols[i].overlay)
 			symbolmap_data_size += strlen(table->symbols[i].name) + 1;
-	symbolmap_data_size = align32(symbolmap_data_size, 4);
+	symbolmap_data_size = ALIGN(symbolmap_data_size, 4);
 	u32 serial_size = strlen(serial) + 1;
 	u32 shstrtab_size = 0;
 	for (u32 i = 0; i < ARRAY_SIZE(section_names); i++)
 		shstrtab_size += strlen(section_names[i]) + 1;
-	shstrtab_size = align32(shstrtab_size, 4);
+	shstrtab_size = ALIGN(shstrtab_size, 4);
 	u32 section_headers_size = ARRAY_SIZE(section_names) * sizeof(ElfSectionHeader);
 	u32 symtab_size = (1 + static_symbol_count) * sizeof(ElfSymbol);
 	u32 strtab_size = 1;

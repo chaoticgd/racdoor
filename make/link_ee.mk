@@ -14,8 +14,8 @@ $(BIN).%.tbl: $(TBLGEN) $(OBJS) $(PROJECTDIR)/tables/output/%.csv
 # together the sections from the object files given as input but it will not
 # apply relocations for external symbols.
 .PRECIOUS: $(BIN).%.elf
-$(BIN).%.elf: $(OBJS) $(BIN).%.tbl $(PROJECTDIR)/linkfile.ld
-	$(CC) $(OBJS) $(LIBS) $(BIN).$*.tbl -o $@ -nostdlib -Wl,-r,-T,$(PROJECTDIR)/linkfile.ld,-Map,$(BIN).$*.map
+$(BIN).%.elf: $(PROJECTDIR)/sdk/loader.ee.o $(OBJS) $(LIBS) $(BIN).%.tbl $(PROJECTDIR)/linkfile.ld
+	$(CC) $(PROJECTDIR)/sdk/loader.ee.o $(OBJS) $(LIBS) $(BIN).$*.tbl -o $@ -nostdlib -Wl,-r,-T,$(PROJECTDIR)/linkfile.ld,-Map,$(BIN).$*.map
 
 # Apply relocations for static symbols and copy relocations for dynamic symbols
 # into the .racdoor.relocs section so that they can be applied at runtime.

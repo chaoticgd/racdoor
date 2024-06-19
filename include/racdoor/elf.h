@@ -3,7 +3,7 @@
 
 #include <racdoor/util.h>
 
-/* ELF file format */
+/* ELF file format. */
 
 typedef struct {
 	/* 0x0 */ u32 ident_magic;
@@ -117,7 +117,20 @@ typedef enum {
 	R_MIPS_GPREL32 = 12
 } ElfRelocationType;
 
-/* Racdoor specific */
+/* Racdoor specific. */
+
+typedef struct {
+	u32 dest;
+	u16 source;
+	u16 size;
+} RacdoorLoadHeader;
+
+typedef struct {
+	u8 copy_count;
+	u8 fill_count;
+	u8 pad[2];
+	RacdoorLoadHeader loads[];
+} RacdoorImageHeader;
 
 typedef struct {
 	u32 string_offset;

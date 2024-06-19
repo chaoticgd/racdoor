@@ -1,13 +1,10 @@
 PROJECTDIR = ../..
 
-BIN = hello
-SRCS = hello.cpp
-LIBS = $(PROJECTDIR)/sdk/sdk.$(TARGET).a
+BIN = inject
+SRCS = inject.c $(PROJECTDIR)/sdk/crypto.c $(PROJECTDIR)/sdk/save.c
 
-SERIALS = SCES-50916
-
-host:
-ee: hello
+host: inject
+ee:
 clean: compileclean linkclean
 
 include $(PROJECTDIR)/make/config_$(TARGET).mk

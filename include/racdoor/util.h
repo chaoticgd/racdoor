@@ -23,6 +23,7 @@ typedef double f64;
 #define MAX(x, y) ((x > y) ? (x) : (y))
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+#define ALIGN(value, alignment) (value) + (-(value) & ((alignment) - 1))
 
 #ifdef _EE
 	#define NULL ((void*) 0)
@@ -33,12 +34,7 @@ typedef double f64;
 
 #define CHECK(condition, ...) if(!(condition)) { ERROR(__VA_ARGS__); }
 
-#ifndef _EE
-	static inline s32 align32(s32 value, s32 alignment)
-	{
-		return value + (-value & (alignment - 1));
-	}
-	
+#ifdef _HOST
 	static inline void* checked_malloc(unsigned long size)
 	{
 		void* ptr = malloc(size);

@@ -1,4 +1,7 @@
 #define MIPS_ZERO 0
+#define MIPS_AT 1
+#define MIPS_V0 2
+#define MIPS_V1 3
 #define MIPS_A0 4
 #define MIPS_A1 5
 #define MIPS_A2 6
@@ -7,7 +10,26 @@
 #define MIPS_T1 9
 #define MIPS_T2 10
 #define MIPS_T3 11
+#define MIPS_T4 12
+#define MIPS_T5 13
+#define MIPS_T6 14
+#define MIPS_T7 15
+#define MIPS_S0 16
+#define MIPS_S1 17
+#define MIPS_S2 18
+#define MIPS_S3 19
+#define MIPS_S4 20
+#define MIPS_S5 21
+#define MIPS_S6 22
+#define MIPS_S7 23
+#define MIPS_T8 24
+#define MIPS_T9 25
+#define MIPS_K0 26
+#define MIPS_K1 27
+#define MIPS_GP 28
 #define MIPS_SP 29
+#define MIPS_FP 30
+#define MIPS_RA 31
 
 #define MIPS_OP_MASK        0xfc000000
 #define MIPS_RS_MASK        0x03e00000
@@ -26,6 +48,8 @@
 #define MIPS_ADDIU(dest, source, immediate) (((immediate) & MIPS_IMMEDIATE_MASK) | ((dest) << 16) | ((source) << 21) | (0x9 << 26))
 #define MIPS_ORI(dest, source, immediate) (((immediate) & MIPS_IMMEDIATE_MASK) | ((dest) << 16) | ((source) << 21) | (0xd << 26))
 #define MIPS_LUI(dest, immediate) ((immediate) & MIPS_IMMEDIATE_MASK) | ((dest) << 16) | (0xf << 26)
+#define MIPS_LQ(dest, offset, base) (offset & MIPS_IMMEDIATE_MASK) | ((dest) << 16) | ((base) << 21) | (0x1e << 26)
+#define MIPS_SQ(dest, offset, base) (offset & MIPS_IMMEDIATE_MASK) | ((dest) << 16) | ((base) << 21) | (0x1f << 26)
 #define MIPS_LW(dest, offset, base) (offset & MIPS_IMMEDIATE_MASK) | ((dest) << 16) | ((base) << 21) | (0x23 << 26)
 #define MIPS_LBU(dest, offset, base) (offset & MIPS_IMMEDIATE_MASK) | ((dest) << 16) | ((base) << 21) | (0x24 << 26)
 #define MIPS_SW(src, offset, base) (offset & MIPS_IMMEDIATE_MASK) | ((src) << 16) | ((base) << 21) | (0x2b << 26)

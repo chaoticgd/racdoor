@@ -1,5 +1,4 @@
-/* We enter through the racdoor. */
-ENTRY(racdoor_entry);
+ENTRY(loader_entry);
 
 PHDRS
 {
@@ -23,12 +22,25 @@ SECTIONS
 	   the operating system or OPL. */
 	. = 0x000d0000;
 	
+	/* Position independent assembly code that loads the other sections by
+	   copying or zeroing them. */
+	.racdoor.loader :
+	{
+		/* EE hardware errata: Prevent code and data from being too close. */
+		. += 0x14;
+		
+		*(.racdoor.loader)
+	} :text
+	
 	.text :
 	{
 		*(.text)
 		*(.text.*)
 		*(.gnu.linkonce.t*)
-	} :text
+		
+		/* EE hardware errata: Prevent code and data from being too close. */
+		. += 0x14;
+	}
 	
 	.data ALIGN(128) :
 	{

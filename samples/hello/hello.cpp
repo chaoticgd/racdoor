@@ -1,4 +1,5 @@
 #include <game/dl.h>
+#include <racdoor/cleanup.h>
 #include <racdoor/linker.h>
 #include <racdoor/hook.h>
 
@@ -17,19 +18,19 @@ enum FontAlignment {
 };
 typedef long unsigned int uint64;
 
-extern "C" void FontPrint(
-	float x,
-	float y,
-	uint64 rgba,
-	char *s,
-	int length,
-	float scale_x,
-	float scale_y, 
-	FontAlignment alignment,
-	bool enable_drop_shadow,
-	uint64 drop_shadow_color,
-	float drop_shadow_x_offset,
-	float drop_shadow_y_offset);
+//extern "C" void FontPrint(
+//	float x,
+//	float y,
+//	uint64 rgba,
+//	char *s,
+//	int length,
+//	float scale_x,
+//	float scale_y, 
+//	FontAlignment alignment,
+//	bool enable_drop_shadow,
+//	uint64 drop_shadow_color,
+//	float drop_shadow_x_offset,
+//	float drop_shadow_y_offset);
 
 void my_font_print(
 	float x,
@@ -53,9 +54,10 @@ FuncHook myhook;
 extern "C" void racdoor_entry()
 {
 	apply_relocations();
+	cleanup();
 	
-	Level = 123;
-	MemSlots.os = 0;
+	//Level = 123;
+	//MemSlots.os = 0;
 	
-	install_hook(&myhook, (void*) FontPrint, (void*) my_font_print);
+	//install_hook(&myhook, (void*) FontPrint, (void*) my_font_print);
 }
