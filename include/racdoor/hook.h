@@ -1,3 +1,6 @@
+#ifndef _RACDOOR_HOOK_H
+#define _RACDOOR_HOOK_H
+
 #include <racdoor/util.h>
 
 #ifdef __cplusplus
@@ -24,4 +27,6 @@ void uninstall_all_hooks();
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
