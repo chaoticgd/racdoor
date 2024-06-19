@@ -130,7 +130,7 @@ typedef struct {
 	u8 fill_count;
 	u8 pad[2];
 	RacdoorLoadHeader loads[];
-} RacdoorImageHeader;
+} RacdoorPayloadHeader;
 
 typedef struct {
 	u32 string_offset;

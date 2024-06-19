@@ -5,6 +5,7 @@
 #include <racdoor/util.h>
 
 #include <string.h>
+#include <time.h>
 
 void inject_rac(SaveSlot* save, Buffer rdx);
 u32 pack_rdx(u8* output, u32 output_size, Buffer rdx);
@@ -64,8 +65,8 @@ void inject_rac(SaveSlot* save, Buffer rdx)
 	u32 trampoline_block = lookup_symbol(rdx, "_racdoor_trampoline_block");
 	u32 decryptor = lookup_symbol(rdx, "_racdoor_decryptor");
 	u32 decryptor_block = lookup_symbol(rdx, "_racdoor_decryptor_block");
-	u32 image = lookup_symbol(rdx, "_racdoor_image");
-	u32 image_end = lookup_symbol(rdx, "_racdoor_image_end");
+	u32 payload = lookup_symbol(rdx, "_racdoor_payload");
+	u32 payload_end = lookup_symbol(rdx, "_racdoor_payload_end");
 	
 	/* Pack and encrypt the payload image. */
 	u32 block_size = 2048;
@@ -76,13 +77,22 @@ void inject_rac(SaveSlot* save, Buffer rdx)
 	
 	u32 entry_point_offset = pack_rdx(data, max_size, rdx);
 	
+	srand(time(NULL));
+	u32 key = rand();
+	
+	xor_crypt((u32*) data, (u32*) (data + max_size), key);
+	
+	/* Generate some assembly code to decrypt the payload. */
+	u8 decryptor_asm[256];
+	u32 decryptor_entry_offset = gen_xor_decryptor((u32*) decryptor_asm, payload, payload_end, key, payload + entry_point_offset);
+	
 	/* Enable help text so that our exploit runs, but disable the help audio
 	   since playing the same help message again and again would otherwise get
 	   quite repetitive. */
 	SaveBlock* voice_on = lookup_block(&save->game, BLOCK_HelpVoiceOn);
 	SaveBlock* text_on = lookup_block(&save->game, BLOCK_HelpTextOn);
 	CHECK(voice_on->size == 1, "Incorrectly sized VoiceOn block.\n");
-	CHECK(text_on->size == 1, "Incorrectly sized VoiceOn block.\n");
+	CHECK(text_on->size == 1, "Incorrectly sized TextOn block.\n");
 	*(u8*) voice_on->data = 0;
 	*(u8*) text_on->data = 1;
 	
@@ -132,27 +142,21 @@ void inject_rac(SaveSlot* save, Buffer rdx)
 	   location. */
 	SaveBlock* trampoline_save = lookup_block(&save->game, trampoline_block);
 	CHECK((u64) trampoline_offset + 8 < trampoline_save->size, "Symbol _racdoor_target_offset is too big.\n");
-	*(u32*) &trampoline_save->data[trampoline_offset + 0] = MIPS_J(decryptor);
+	*(u32*) &trampoline_save->data[trampoline_offset + 0] = MIPS_J(decryptor + decryptor_entry_offset);
 	*(u32*) &trampoline_save->data[trampoline_offset + 4] = MIPS_NOP();
 	
-	/* Write out some assembly to decrypt the payload. */
-	u32 max_decryptor_size = 256;
-	u8 decryptor_asm[256];
-	memset(decryptor_asm, 0, sizeof(decryptor_asm));
-	
-	gen_xor_decryptor((u32*) decryptor_asm, image, image_end, 0, image + entry_point_offset);
-	
+	/* Pack the decryptor into the save file. */
 	u64 decryptor_asm_offset = 0;
 	for (u32 i = 0; i < save->level_count; i++)
 	{
 		SaveBlock* dest = lookup_block(&save->levels[i], decryptor_block);
-		u32 copy_size = MIN(dest->size, max_decryptor_size - decryptor_asm_offset);
+		u32 copy_size = MIN(dest->size, sizeof(decryptor_asm) - decryptor_asm_offset);
 		memcpy(dest->data, decryptor_asm + decryptor_asm_offset, copy_size);
 		
 		decryptor_asm_offset += copy_size;
 	}
 	
-	/* Finally, we write the encrypted payload image to the save file. */
+	/* Write the encrypted payload image into the save file. */
 	for (u32 i = 0; i < save->level_count; i++)
 	{
 		SaveBlock* dest = lookup_block(&save->levels[i], BLOCK_MapMask);
@@ -169,11 +173,11 @@ u32 pack_rdx(u8* output, u32 output_size, Buffer rdx)
 	
 	printf("%.2fkb total\n", output_size / 1024.f);
 	
-	CHECK((u64) offset + sizeof(RacdoorImageHeader) < output_size, "RDX too big!\n");
-	RacdoorImageHeader* image_header = (RacdoorImageHeader*) &output[offset];
-	offset += sizeof(RacdoorImageHeader);
+	CHECK((u64) offset + sizeof(RacdoorPayloadHeader) < output_size, "RDX too big!\n");
+	RacdoorPayloadHeader* payload_header = (RacdoorPayloadHeader*) &output[offset];
+	offset += sizeof(RacdoorPayloadHeader);
 	
-	memset(image_header, 0, sizeof(RacdoorImageHeader));
+	memset(payload_header, 0, sizeof(RacdoorPayloadHeader));
 	
 	ElfFileHeader* rdx_header = buffer_get(rdx, 0, sizeof(ElfFileHeader), "RDX file header");
 	CHECK(rdx_header->ident_magic == 0x464c457f, "RDX file has bad magic number.\n");
@@ -209,7 +213,7 @@ u32 pack_rdx(u8* output, u32 output_size, Buffer rdx)
 		if (sections[i].type != SHT_PROGBITS && !is_entry)
 			continue;
 		
-		RacdoorLoadHeader* load_header = &image_header->loads[load_index++];
+		RacdoorLoadHeader* load_header = &payload_header->loads[load_index++];
 		
 		CHECK(offset <= 0xffff, "Cannot encode load offset.\n");
 		CHECK(sections[i].size <= 0xffff, "Cannot encode load size.\n");
@@ -226,7 +230,7 @@ u32 pack_rdx(u8* output, u32 output_size, Buffer rdx)
 			entry_point_offset = offset + (rdx_header->entry - sections[i].addr);
 		
 		offset += sections[i].size;
-		image_header->copy_count++;
+		payload_header->copy_count++;
 	}
 	
 	/* Convert NOBITS sections to fill headers. */
@@ -240,7 +244,7 @@ u32 pack_rdx(u8* output, u32 output_size, Buffer rdx)
 		if (sections[i].type != SHT_NOBITS || is_entry)
 			continue;
 		
-		RacdoorLoadHeader* load_header = &image_header->loads[load_index++];
+		RacdoorLoadHeader* load_header = &payload_header->loads[load_index++];
 		
 		CHECK(offset <= 0xffff, "Cannot encode load offset.\n");
 		CHECK(sections[i].size <= 0xffff, "Cannot encode load size.\n");
@@ -248,7 +252,7 @@ u32 pack_rdx(u8* output, u32 output_size, Buffer rdx)
 		load_header->source = 0; /* Fill value. */
 		load_header->size = (u16) sections[i].size;
 		
-		image_header->fill_count++;
+		payload_header->fill_count++;
 	}
 	
 	printf("%.2fkb used\n", offset / 1024.f);
