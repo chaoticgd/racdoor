@@ -1,4 +1,7 @@
 NAME,TYPE,COMMENT,SIZE,CORE,FRONTEND,FRONTBIN,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18
+_racdoor_help_message,NOTYPE,Quick select message,,50,,,,,,,,,,,,,,,,,,,,,
+_racdoor_help_gadget,NOTYPE,,,15,,,,,,,,,,,,,,,,,,,,,
+_racdoor_help_log,NOTYPE,,,00141e08,,,,,,,,,,,,,,,,,,,,,
 _racdoor_initial_hook,NOTYPE,snd_FlushSoundCommands,,12de28,,,,,,,,,,,,,,,,,,,,,
 _racdoor_return_to_game,NOTYPE,snd_FlushSoundCommands,,12de3c,,,,,,,,,,,,,,,,,,,,,
 _racdoor_original_instruction,NOTYPE,"bne $v0, $zero, 0x0012de3c",,14400004,,,,,,,,,,,,,,,,,,,,,

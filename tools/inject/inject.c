@@ -55,6 +55,9 @@ typedef struct {
 void inject_rac(SaveSlot* save, Buffer rdx)
 {
 	/* Lookup special symbols used for configuring the exploit. */
+	u32 help_message = lookup_symbol(rdx, "_racdoor_help_message");
+	u32 help_gadget = lookup_symbol(rdx, "_racdoor_help_gadget");
+	u32 help_log = lookup_symbol(rdx, "_racdoor_help_log");
 	u32 initial_hook = lookup_symbol(rdx, "_racdoor_initial_hook");
 	u32 trampoline = lookup_symbol(rdx, "_racdoor_trampoline");
 	u32 trampoline_offset = lookup_symbol(rdx, "_racdoor_trampoline_offset");
@@ -89,14 +92,11 @@ void inject_rac(SaveSlot* save, Buffer rdx)
 	/* Disable all the help messages except for the one we want to use to
 	   trigger the initial out of bounds write. */
 	
-	u32 quicksel_help_message = 80;
-	u32 precondition_help_message = 21;
-	
 	SaveBlock* help_data_messages = lookup_block(&save->game, BLOCK_HelpDataMessages);
 	for (u32 i = 0; i < help_data_messages->size / sizeof(HelpDatum); i++)
 	{
 		HelpDatum* message = &((HelpDatum*) help_data_messages->data)[i];
-		message->flag = (i == quicksel_help_message) ? 0 : -1;
+		message->flag = (i == help_message) ? 0 : -1;
 		message->unknown_2 = 0;
 		message->unknown_4 = 0;
 	}
@@ -114,7 +114,7 @@ void inject_rac(SaveSlot* save, Buffer rdx)
 	for (u32 i = 0; i < help_data_misc->size / sizeof(HelpDatum); i++)
 	{
 		HelpDatum* message = &((HelpDatum*) help_data_misc->data)[i];
-		message->flag = (i == precondition_help_message) ? 0 : -1;
+		message->flag = (i == help_gadget) ? 0 : -1;
 		message->unknown_2 = 0;
 		message->unknown_4 = 0;
 	}
@@ -125,7 +125,7 @@ void inject_rac(SaveSlot* save, Buffer rdx)
 	   code loaded from the memory card. */
 	SaveBlock* help_log_pos = lookup_block(&save->game, BLOCK_HelpLogPos);
 	CHECK(help_log_pos->size == 4, "Incorrectly sized HelpLogPos block.\n");
-	*(u32*) help_log_pos->data = (initial_hook + 1) - 0x00141e08;
+	*(u32*) help_log_pos->data = (initial_hook + 1) - help_log;
 	
 	/* Because we cannot choose exactly where in the memory card data the
 	   processor will jump to, we setup a trampoline to jump to a more desirable
@@ -299,5 +299,5 @@ u32 lookup_symbol(Buffer object, const char* symbol)
 		}
 	}
 	
-	ERROR("Undefined special symbol '%s'.\n", symbol);
+	ERROR("Undefined symbol '%s'.\n", symbol);
 }
