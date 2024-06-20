@@ -43,6 +43,7 @@
 #define MIPS_NOP() 0
 #define MIPS_SLL(rd, rt, sa) 0x0 | ((sa) << 6) | ((rt) << 16) | ((rd) << 11) | (0x0 << 26)
 #define MIPS_SRL(rd, rt, sa) 0x2 | ((sa) << 6) | ((rt) << 16) | ((rd) << 11) | (0x0 << 26)
+#define MIPS_BREAK() 0xd | (0x0 << 26)
 #define MIPS_ADD(rd, rs, rt) 0x20 | ((rd) << 11) | ((rt) << 16) | ((rs) << 21) | (0x0 << 26)
 #define MIPS_XOR(rd, rs, rt) 0x26 | ((rd) << 11) | ((rt) << 16) | ((rs) << 21) | (0x0 << 26)
 #define MIPS_J(target) (((target) >> 2) & MIPS_TARGET_MASK) | (0x2 << 26)

@@ -6,19 +6,22 @@ static FuncHook* hook_head;
 
 void FlushCache(int mode);
 
-void install_hook(FuncHook* hook, void* original_func, void* replacement_func)
+void install_hook(FuncHook* hook, void* original_func, void* replacement_func, void* trampoline)
 {
-	/* Add to the list. */
+	/* Store information needed to uninstall the hook. */
 	hook->prev = NULL;
 	hook->next = hook_head;
 	hook_head = hook;
 	
-	/* Backup original instructions. */
 	hook->original_func = (u32*) original_func;
-	hook->original_insns[0] = hook->original_func[0];
-	hook->original_insns[1] = hook->original_func[1];
+	hook->trampoline = (u32*) trampoline;
 	
-	/* Write new instructions. */
+	/* Prime the trampoline. */
+	hook->trampoline[0] = hook->original_func[0];
+	hook->trampoline[1] = MIPS_J((u32) (hook->original_func + 2));
+	hook->trampoline[2] = hook->original_func[1];
+	
+	/* Install the hook. */
 	hook->original_func[0] = MIPS_J((u32) replacement_func);
 	hook->original_func[1] = MIPS_NOP();
 	
@@ -38,8 +41,13 @@ void uninstall_hook(FuncHook* hook)
 		hook->next->prev = hook->prev;
 	
 	/* Restore original instructions. */
-	hook->original_func[0] = hook->original_insns[0];
-	hook->original_func[1] = hook->original_insns[1];
+	hook->original_func[0] = hook->trampoline[0];
+	hook->original_func[1] = hook->trampoline[2];
+	
+	/* Reset the trampoline. */
+	hook->trampoline[0] = MIPS_BREAK();
+	hook->trampoline[1] = MIPS_BREAK();
+	hook->trampoline[2] = MIPS_BREAK();
 	
 	/* Flush the instruction cache. */
 	FlushCache(2);

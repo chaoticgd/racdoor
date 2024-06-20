@@ -19,8 +19,8 @@ typedef unsigned long long u64;
 typedef float f32;
 typedef double f64;
 
-#define MIN(x, y) ((x < y) ? (x) : (y))
-#define MAX(x, y) ((x > y) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 #define ALIGN(value, alignment) (value) + (-(value) & ((alignment) - 1))
@@ -41,6 +41,12 @@ typedef double f64;
 		CHECK(ptr || size == 0, "Failed to allocate memory.\n");
 		return ptr;
 	}
+#endif
+
+#ifdef __cplusplus
+	#define EXTERN_C extern "C"
+#else
+	#define EXTERN_C
 #endif
 
 #endif
