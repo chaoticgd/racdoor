@@ -98,7 +98,7 @@ void inject_rac(SaveSlot* save, Buffer rdx)
 	
 	/* TODO: More than 8 items must be unlocked for the help message we want to
 	   use to be run. */
-	   
+	
 	/* Disable all the help messages except for the one we want to use to
 	   trigger the initial out of bounds write. */
 	
@@ -129,8 +129,8 @@ void inject_rac(SaveSlot* save, Buffer rdx)
 		message->unknown_4 = 0;
 	}
 	
-	/* Overrwrite the HelpLogPos variable so that the help message index is
-	   written over the high byte the immediate field from a relative branch
+	/* Adjust the HelpLogPos variable so that the help message index is written
+	   over the high byte of the immediate field from a relative branch
 	   instruction such as to make the processor jump into and start executing
 	   code loaded from the memory card. */
 	SaveBlock* help_log_pos = lookup_block(&save->game, BLOCK_HelpLogPos);
