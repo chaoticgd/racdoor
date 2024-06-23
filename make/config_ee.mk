@@ -13,4 +13,4 @@ TBLGEN = $(PROJECTDIR)/tools/tblgen/tblgen
 
 INCLUDES += -I$(PROJECTDIR)/include
 
-COMPILEFLAGS += -std=gnu99 -Os -G0 -ffreestanding -nostdinc -mabi=eabi -mno-abicalls -fno-exceptions -D_EE
+COMPILEFLAGS += -std=c99 -Os -G0 -ffreestanding -nostdinc -mabi=eabi -mno-abicalls -fno-exceptions -D_EE

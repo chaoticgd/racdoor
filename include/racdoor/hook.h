@@ -14,7 +14,7 @@ typedef struct _FuncHook {
    hooked functions from within the replacements. */
 #define TRAMPOLINE(name, returntype) \
 	returntype name(); \
-	asm \
+	__asm__ \
 	( \
 		".text\n" \
 		".global " #name "\n" \
