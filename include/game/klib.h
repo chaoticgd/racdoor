@@ -1,6 +1,5 @@
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef _GAME_KLIB_H
+#define _GAME_KLIB_H
 
 struct ThreadParam;
 struct SemaParam;
@@ -147,6 +146,4 @@ int MachineType(); /* 0x7e */
 int GetMemorySize(); /* 0x7f */
 void _InitTLB(); /* 0x82 */
 
-#ifdef __cplusplus
-}
 #endif

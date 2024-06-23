@@ -3,10 +3,6 @@
 
 #include <racdoor/util.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct _FuncHook {
 	struct _FuncHook* prev;
 	struct _FuncHook* next;
@@ -38,9 +34,5 @@ void uninstall_hook(FuncHook* hook);
 
 /* Restore all functions that have been hooked. */
 void uninstall_all_hooks();
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

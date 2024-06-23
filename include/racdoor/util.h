@@ -43,10 +43,4 @@ typedef double f64;
 	}
 #endif
 
-#ifdef __cplusplus
-	#define EXTERN_C extern "C"
-#else
-	#define EXTERN_C
-#endif
-
 #endif

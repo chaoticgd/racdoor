@@ -9,13 +9,10 @@ DEPFLAGS = -MT $@ -MMD -MP -MF $*.$(TARGET).d
 %.$(TARGET).o: %.s
 %.$(TARGET).o: %.s %.$(TARGET).d
 	$(CC) -c $< -o $@ $(DEPFLAGS) $(COMPILEFLAGS) $(INCLUDES)
+
 %.$(TARGET).o: %.c
 %.$(TARGET).o: %.c %.$(TARGET).d
 	$(CC) -c $< -o $@ $(DEPFLAGS) $(COMPILEFLAGS) $(INCLUDES)
-
-%.$(TARGET).o: %.cpp
-%.$(TARGET).o: %.cpp %.$(TARGET).d
-	$(CXX) -c $< -o $@ $(DEPFLAGS) $(COMPILEFLAGS) $(INCLUDES) -D__cplusplus
 
 $(DEPS):
 
