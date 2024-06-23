@@ -2,6 +2,7 @@
 CC = ee-gcc
 CXX = ee-g++
 AR = ee-ar
+OBJDUMP = ee-objdump
 
 # Racdoor tools
 CSVMERGE = $(PROJECTDIR)/tools/csvmerge/csvmerge

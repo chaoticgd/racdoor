@@ -2,6 +2,7 @@
 CC = gcc
 CXX = g++
 AR = ar
+OBJDUMP = objdump
 
 INCLUDES += -I$(PROJECTDIR)/include
 

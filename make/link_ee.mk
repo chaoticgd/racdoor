@@ -1,6 +1,7 @@
 TBLS := $(patsubst %,$(BIN).%.tbl,$(basename $(SERIALS)))
 ELFS := $(patsubst %,$(BIN).%.elf,$(basename $(SERIALS)))
 RDXS := $(patsubst %,$(BIN).%.rdx,$(basename $(SERIALS)))
+TXTS := $(patsubst %,$(BIN).%.txt,$(basename $(SERIALS)))
 MAPS := $(patsubst %,$(BIN).%.map,$(basename $(SERIALS)))
 
 # Generate an object file containing .symtab symbols for all the core symbols
@@ -22,8 +23,12 @@ $(BIN).%.elf: $(PROJECTDIR)/sdk/loader.ee.o $(OBJS) $(LIBS) $(BIN).%.tbl $(PROJE
 $(BIN).%.rdx: $(RDXPREP) $(BIN).%.elf
 	$(RDXPREP) $(BIN).$*.elf $@
 
+# Automatically generate a diassemblies for all the RDX files.
+$(BIN).%.txt: $(BIN).%.rdx
+	$(OBJDUMP) -D $(BIN).$*.rdx > $@
+
 .PHONY: $(BIN)
-$(BIN): $(RDXS)
+$(BIN): $(RDXS) $(TXTS)
 
 linkclean:
-	$(RM) $(TBLS) $(ELFS) $(RDXS) $(MAPS)
+	$(RM) $(TBLS) $(ELFS) $(RDXS) $(TXTS) $(MAPS)
