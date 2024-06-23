@@ -19,8 +19,7 @@ int MyDrawBoltCount(void* unknown)
 
 void racdoor_entry()
 {
-	apply_relocations();
-	cleanup();
+	install_transition_hooks();
 	
 	install_hook(&hook, DrawBoltCount, MyDrawBoltCount, hook_trampoline);
 }

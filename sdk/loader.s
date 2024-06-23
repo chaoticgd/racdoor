@@ -1,5 +1,6 @@
 	.set noat
 	.set noreorder
+	.set nomacro
 	.section .racdoor.loader
 	.global loader_entry
 loader_entry:
@@ -34,42 +35,21 @@ loader_save_regs:
 	sq $v1, 0x20($sp)
 	sq $at, 0xe0($sp)
 	sq $v0, 0x50($sp)
-	
-loader_parse_header:
-	lui $s0, %hi(_racdoor_payload)
-	addiu $s0, $s0, %lo(_racdoor_payload)
-	lbu $s1, 0x0($s0)
-	lbu $s2, 0x1($s0)
-	addiu $s3, $s0, 4
-	
-loader_copy_loop:
-	lwu $a0, 0x0($s3)
-	lhu $a1, 0x4($s3)
-	add $a1, $a1, $s0
-	jal memcpy
-	lhu $a2, 0x6($s3)
-	
-	addiu $s1, $s1, -1
-	bgtz $s1, loader_copy_loop
-	addiu $s3, $s3, 8
-	
-loader_fill_loop:
-	lwu $a0, 0x0($s3)
-	lhu $a1, 0x4($s3)
-	add $a1, $a1, $s0
-	jal memset
-	lhu $a2, 0x6($s3)
-	
-	addiu $s2, $s2, -1
-	bgtz $s2, loader_fill_loop
-	addiu $s3, $s3, 8
+
+loader_unpack:
+	b unpack_initial
+	nop
 
 loader_run:
 	jal FlushCache
 	addiu $a0, $zero, 0
 	jal FlushCache
 	addiu $a0, $zero, 2
-
+	
+	jal apply_relocations
+	nop
+	jal cleanup
+	nop
 	jal racdoor_entry
 	nop
 
@@ -106,3 +86,55 @@ loader_restore_regs:
 loader_return_to_game:
 	j _racdoor_return_to_game
 	addiu $sp, $sp, 0x1c0
+
+	.global unpack
+unpack:
+	addiu $sp, $sp, -0x50
+	sq $s0, 0x0($sp)
+	sq $s1, 0x10($sp)
+	sq $s2, 0x20($sp)
+	sq $s3, 0x30($sp)
+	sq $ra, 0x40($sp)
+	
+unpack_initial:
+	lui $s0, %hi(_racdoor_payload)
+	addiu $s0, $s0, %lo(_racdoor_payload)
+	lbu $s1, 0x0($s0)
+	lbu $s2, 0x1($s0)
+	addiu $s3, $s0, 4
+	
+unpack_copy_loop:
+	lwu $a0, 0x0($s3)
+	lhu $a1, 0x4($s3)
+	add $a1, $a1, $s0
+	jal memcpy
+	lhu $a2, 0x6($s3)
+	
+	addiu $s1, $s1, -1
+	bgtz $s1, unpack_copy_loop
+	addiu $s3, $s3, 8
+	
+unpack_fill_loop:
+	lwu $a0, 0x0($s3)
+	lhu $a1, 0x4($s3)
+	add $a1, $a1, $s0
+	jal memset
+	lhu $a2, 0x6($s3)
+	
+	addiu $s2, $s2, -1
+	bgtz $s2, unpack_fill_loop
+	addiu $s3, $s3, 8
+
+unpack_finish:
+	lbu $s1, 0x3($s0)
+	beq $s1, $zero, loader_run
+	nop
+
+unpack_return:
+	lq $s0, 0x0($sp)
+	lq $s1, 0x10($sp)
+	lq $s2, 0x20($sp)
+	lq $s3, 0x30($sp)
+	lq $ra, 0x40($sp)
+	jr $ra
+	addiu $sp, $sp, 0x50
