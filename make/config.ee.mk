@@ -5,11 +5,11 @@ AR = ee-ar
 OBJDUMP = ee-objdump
 
 # Racdoor tools
-CSVMERGE = $(PROJECTDIR)/tools/csvmerge/csvmerge
-INJECT = $(PROJECTDIR)/tools/inject/inject
-RDXPREP = $(PROJECTDIR)/tools/rdxprep/rdxprep
-TBLGEN = $(PROJECTDIR)/tools/tblgen/tblgen
+CSVMERGE = $(RACDOOR)/tools/csvmerge/csvmerge
+INJECT = $(RACDOOR)/tools/inject/inject
+RDXPREP = $(RACDOOR)/tools/rdxprep/rdxprep
+TBLGEN = $(RACDOOR)/tools/tblgen/tblgen
 
-INCLUDES += -I$(PROJECTDIR)/include
+INCLUDES += -I$(RACDOOR)/include
 
 COMPILEFLAGS += -std=c99 -Os -G0 -ffreestanding -nostdinc -mabi=eabi -mno-abicalls -fno-exceptions -D_EE

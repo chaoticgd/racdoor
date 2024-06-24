@@ -1,4 +1,4 @@
-PROJECTDIR = ../..
+RACDOOR = ../..
 
 BIN = csvmerge
 SRCS = csvmerge.c
@@ -7,6 +7,6 @@ host: csvmerge
 ee:
 clean: compileclean linkclean
 
-include $(PROJECTDIR)/make/config.$(TARGET).mk
-include $(PROJECTDIR)/make/compile.mk
-include $(PROJECTDIR)/make/link.$(TARGET).mk
+include $(RACDOOR)/make/config.$(TARGET).mk
+include $(RACDOOR)/make/compile.mk
+include $(RACDOOR)/make/link.$(TARGET).mk

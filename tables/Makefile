@@ -1,4 +1,4 @@
-PROJECTDIR = ..
+RACDOOR = ..
 
 # Enumerate the input CSV files. These will all have filenames that conform to
 # the following format: "$(CATEGORY).$(SERIAL).csv".
@@ -22,4 +22,4 @@ clean:
 output/%.csv: $(CSVMERGE) $$(wildcard *.%.csv)
 	$(CSVMERGE) $(wildcard *.$*.csv) -o $@
 
-include $(PROJECTDIR)/make/config.$(TARGET).mk
+include $(RACDOOR)/make/config.$(TARGET).mk

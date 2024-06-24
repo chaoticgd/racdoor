@@ -1,4 +1,4 @@
-PROJECTDIR := ..
+RACDOOR := ..
 
 LIB = sdk
 SRCS = cleanup.c crypto.c hook.c linker.c loader.s module.c save.c transition.c
@@ -7,6 +7,6 @@ host: crypto.host.o linker.host.o
 ee: sdk.ee.a loader.ee.o
 clean: compileclean archiveclean
 
-include $(PROJECTDIR)/make/config.$(TARGET).mk
-include $(PROJECTDIR)/make/compile.mk
-include $(PROJECTDIR)/make/archive.mk
+include $(RACDOOR)/make/config.$(TARGET).mk
+include $(RACDOOR)/make/compile.mk
+include $(RACDOOR)/make/archive.mk

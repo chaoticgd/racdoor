@@ -1,12 +1,12 @@
-PROJECTDIR = ../..
+RACDOOR = ../..
 
 BIN = inject
-SRCS = inject.c $(PROJECTDIR)/sdk/crypto.c $(PROJECTDIR)/sdk/save.c
+SRCS = inject.c $(RACDOOR)/sdk/crypto.c $(RACDOOR)/sdk/save.c
 
 host: inject
 ee:
 clean: compileclean linkclean
 
-include $(PROJECTDIR)/make/config.$(TARGET).mk
-include $(PROJECTDIR)/make/compile.mk
-include $(PROJECTDIR)/make/link.$(TARGET).mk
+include $(RACDOOR)/make/config.$(TARGET).mk
+include $(RACDOOR)/make/compile.mk
+include $(RACDOOR)/make/link.$(TARGET).mk

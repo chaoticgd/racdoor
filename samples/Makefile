@@ -1,3 +1,3 @@
-PROJECTDIR = ..
+RACDOOR = ..
 
-include $(PROJECTDIR)/make/recurse.mk
+include $(RACDOOR)/make/recurse.mk
