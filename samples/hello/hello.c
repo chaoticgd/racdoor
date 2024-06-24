@@ -3,7 +3,7 @@
 
 extern int Level;
 
-void FontPrint1Wrapper(int x, int y, u32 rgba, const char* s, int length);
+void FontPrintWrapper1(int x, int y, u32 rgba, const char* s, int length);
 int DrawBoltCount(void* unknown);
 
 FuncHook hook = {};
@@ -11,7 +11,7 @@ TRAMPOLINE(hook_trampoline, int);
 
 int MyDrawBoltCount(void* unknown)
 {
-	FontPrint1Wrapper(200, 100, 0xff00ffff, "Hello, World!", 13);
+	FontPrintWrapper1(200, 100, 0xff00ffff, "Hello, World!", 13);
 	
 	hook_trampoline(unknown);
 }
