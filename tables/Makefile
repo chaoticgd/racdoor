@@ -22,4 +22,4 @@ clean:
 output/%.csv: $(CSVMERGE) $$(wildcard *.%.csv)
 	$(CSVMERGE) $(wildcard *.$*.csv) -o $@
 
-include $(PROJECTDIR)/make/config_$(TARGET).mk
+include $(PROJECTDIR)/make/config.$(TARGET).mk
