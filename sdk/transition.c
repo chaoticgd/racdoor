@@ -30,6 +30,8 @@ static void* parse_bin_thunk()
 	   uninstall_all_hooks, which would otherwise destroy it. */
 	memcpy(trampoline_backup, parse_bin_trampoline, 12);
 	
+	unload_modules();
+	
 	uninstall_all_hooks();
 	
 	/* Copy the trampoline back. */
@@ -55,7 +57,7 @@ static void* parse_bin_thunk()
 	/* Apply the relocations for the new level. */
 	apply_relocations();
 	
-	racdoor_entry();
+	load_modules();
 	
 	return startlevel;
 }

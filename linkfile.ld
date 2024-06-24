@@ -79,6 +79,14 @@ SECTIONS
 		*(COMMON)
 	}
 	
+	/* Function pointers used for loading and unloading modules. */
+	.racdoor.modules :
+	{
+		_racdoor_modules = .;
+		*(.racdoor.modules)
+		_racdoor_modules_end = .;
+	}
+	
 	/* Runtime address table used for performing relocation. */
 	.racdoor.addrtbl :
 	{

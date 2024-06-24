@@ -1,6 +1,5 @@
-#include <racdoor/cleanup.h>
-#include <racdoor/linker.h>
 #include <racdoor/hook.h>
+#include <racdoor/module.h>
 
 extern int Level;
 
@@ -17,9 +16,14 @@ int MyDrawBoltCount(void* unknown)
 	hook_trampoline(unknown);
 }
 
-void racdoor_entry()
+void mod_load()
 {
-	install_transition_hooks();
-	
 	install_hook(&hook, DrawBoltCount, MyDrawBoltCount, hook_trampoline);
 }
+
+void mod_unload()
+{
+	
+}
+
+MODULE(mod_load, mod_unload);

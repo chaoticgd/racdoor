@@ -50,7 +50,7 @@ loader_run:
 	nop
 	jal cleanup
 	nop
-	jal racdoor_entry
+	jal load_modules
 	nop
 
 loader_restore_regs:
