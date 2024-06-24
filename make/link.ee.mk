@@ -1,8 +1,8 @@
 TBLS := $(patsubst %,$(BIN).%.tbl,$(basename $(SERIALS)))
 ELFS := $(patsubst %,$(BIN).%.elf,$(basename $(SERIALS)))
 RDXS := $(patsubst %,$(BIN).%.rdx,$(basename $(SERIALS)))
-TXTS := $(patsubst %,$(BIN).%.txt,$(basename $(SERIALS)))
 MAPS := $(patsubst %,$(BIN).%.map,$(basename $(SERIALS)))
+DISS := $(patsubst %,$(BIN).%.dis,$(basename $(SERIALS)))
 
 # Generate an object file containing .symtab symbols for all the core symbols
 # loaded from the provided CSV file and some custom sections for all of the
@@ -23,12 +23,12 @@ $(BIN).%.elf: $(RACDOOR)/sdk/loader.ee.o $(OBJS) $(LIBS) $(BIN).%.tbl $(RACDOOR)
 $(BIN).%.rdx: $(RDXPREP) $(BIN).%.elf
 	$(RDXPREP) $(BIN).$*.elf $@
 
-# Automatically generate a diassemblies for all the RDX files.
-$(BIN).%.txt: $(BIN).%.rdx
+# Automatically generate diassemblies for all the RDX files.
+$(BIN).%.dis: $(BIN).%.rdx
 	$(OBJDUMP) -D $(BIN).$*.rdx > $@
 
 .PHONY: $(BIN)
-$(BIN): $(RDXS) $(TXTS)
+$(BIN): $(RDXS) $(DISS)
 
 linkclean:
-	$(RM) $(TBLS) $(ELFS) $(RDXS) $(TXTS) $(MAPS)
+	$(RM) $(TBLS) $(ELFS) $(RDXS) $(DISS) $(MAPS)
