@@ -39,6 +39,12 @@ loader_save_regs:
 	sq $at, 0xe0($sp)
 	sq $v0, 0x50($sp)
 
+loader_flush_cache:
+	jal FlushCache
+	addiu $a0, $zero, 0
+	jal FlushCache
+	addiu $a0, $zero, 2
+
 # Load the sections from the payload into memory. This is a relative branch
 # instead of a call because nothing is loaded into its final linked location in
 # memory yet, and we don't know the exact address in which the loader will be
@@ -47,13 +53,14 @@ loader_unpack:
 	b unpack_initial
 	nop
 
-# Run the implant.
-loader_run:
+loader_continue:
 	jal FlushCache
 	addiu $a0, $zero, 0
 	jal FlushCache
 	addiu $a0, $zero, 2
 	
+# Run the implant.
+loader_run:
 	jal apply_relocations
 	nop
 	jal cleanup
@@ -177,7 +184,7 @@ unpack_decompress_loop:
 # the transition code.
 unpack_finish:
 	lbu $s1, 0x3($s0)
-	beq $s1, $zero, loader_run
+	beq $s1, $zero, loader_continue
 	nop
 
 unpack_return:
