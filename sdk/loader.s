@@ -6,6 +6,9 @@
 loader_entry:
 	addiu $sp, $sp, -0x1c0
 
+# Save the values that would've been in the general purpose registers right
+# before the initial hook was triggered so we can restore them and jump back to
+# the game later.
 loader_save_regs:
 	sq $s2, 0xa0($sp)
 	# sq $t3, 0xc0($sp)
@@ -36,10 +39,15 @@ loader_save_regs:
 	sq $at, 0xe0($sp)
 	sq $v0, 0x50($sp)
 
+# Load the sections from the payload into memory. This is a relative branch
+# instead of a call because nothing is loaded into its final linked location in
+# memory yet, and we don't know the exact address in which the loader will be
+# placed into memory ahead of time.
 loader_unpack:
 	b unpack_initial
 	nop
 
+# Run the implant.
 loader_run:
 	jal FlushCache
 	addiu $a0, $zero, 0
@@ -53,6 +61,8 @@ loader_run:
 	jal load_modules
 	nop
 
+# Restore the GPRs so that the processor is in the same state is was when the
+# initial hook was run.
 loader_restore_regs:
 	lq $t5, 0x60($sp)
 	lq $a2, 0x70($sp)
@@ -83,6 +93,7 @@ loader_restore_regs:
 	lq $s7, 0x180($sp)
 	lq $s0, 0xb0($sp)
 
+# Jump back to the game as if nothing ever happenend.
 loader_return_to_game:
 	j _racdoor_return_to_game
 	addiu $sp, $sp, 0x1c0
@@ -99,32 +110,71 @@ unpack:
 unpack_initial:
 	lui $s0, %hi(_racdoor_payload)
 	addiu $s0, $s0, %lo(_racdoor_payload)
-	lbu $s1, 0x0($s0)
-	lbu $s2, 0x1($s0)
-	addiu $s3, $s0, 4
+	addiu $s1, $s0, 4
+
+unpack_copy_start:
+	lbu $s2, 0x0($s0)
+	beq $s2, $zero, unpack_fill_start
+	nop
 	
 unpack_copy_loop:
-	lwu $a0, 0x0($s3)
-	lhu $a1, 0x4($s3)
+	lwu $a0, 0x0($s1)
+	lhu $a1, 0x4($s1)
 	add $a1, $a1, $s0
 	jal memcpy
-	lhu $a2, 0x6($s3)
+	lhu $a2, 0x6($s1)
 	
-	addiu $s1, $s1, -1
-	bgtz $s1, unpack_copy_loop
-	addiu $s3, $s3, 8
-	
+	addiu $s2, $s2, -1
+	bgtz $s2, unpack_copy_loop
+	addiu $s1, $s1, 8
+
+unpack_fill_start:
+	lbu $s2, 0x1($s0)
+	beq $s2, $zero, unpack_decompress_start
+	nop
+
 unpack_fill_loop:
-	lwu $a0, 0x0($s3)
-	lhu $a1, 0x4($s3)
+	lwu $a0, 0x0($s1)
+	lhu $a1, 0x4($s1)
 	add $a1, $a1, $s0
 	jal memset
-	lhu $a2, 0x6($s3)
+	lhu $a2, 0x6($s1)
 	
 	addiu $s2, $s2, -1
 	bgtz $s2, unpack_fill_loop
-	addiu $s3, $s3, 8
+	addiu $s1, $s1, 8
 
+unpack_decompress_start:
+	lbu $s2, 0x2($s0)
+	beq $s2, $zero, unpack_finish
+# Find the FastDecompress function. First we load the level number, and use it
+# to lookup the index of the current overlay. Then, we load the address of the
+# function FastDecompress from an array of pointers that comes right after the
+# load headers.
+	lui $t0, %hi(Level)
+	lw $t0, %lo(Level)($t0)
+	lui $t1, %hi(_racdoor_levelmap)
+	addiu $t1, %lo(_racdoor_levelmap)
+	add $t0, $t1, $t0
+	lbu $t1, 0x0($t0) # Load overlay index.
+	sll $t1, $t1, 2
+	sll $t0, $s2, 3
+	addu $t0, $s1, $t0 # Calculate FastDecompress array pointer.
+	addu $t0, $t0, $t1 # Calculate FastDecompress element pointer.
+	lwu $s3, 0x0($t0)
+
+unpack_decompress_loop:
+	lhu $a0, 0x4($s1)
+	add $a0, $a0, $s0
+	jalr $s3 # FastDecompress
+	lwu $a1, 0x0($s1)
+	
+	addiu $s2, $s2, -1
+	bgtz $s2, unpack_decompress_loop
+	addiu $s1, $s1, 8
+
+# Either jump back to the loader explicitly or return if unpack was called from
+# the transition code.
 unpack_finish:
 	lbu $s1, 0x3($s0)
 	beq $s1, $zero, loader_run

@@ -14,6 +14,10 @@ DEPFLAGS = -MT $@ -MMD -MP -MF $*.$(TARGET).d
 %.$(TARGET).o: %.c %.$(TARGET).d
 	$(CC) -c $< -o $@ $(DEPFLAGS) $(COMPILEFLAGS) $(INCLUDES)
 
+%.$(TARGET).o: %.cpp
+%.$(TARGET).o: %.cpp %.$(TARGET).d
+	$(CC) -c $< -o $@ $(DEPFLAGS) $(INCLUDES)
+
 $(DEPS):
 
 compileclean:

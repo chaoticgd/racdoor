@@ -1,5 +1,5 @@
 $(BIN): $(OBJS)
-	$(CC) $(OBJS) $(LIBS) -o $@
+	$(CXX) $(OBJS) $(LIBS) -o $@
 	
 linkclean:
 	$(RM) $(BIN)

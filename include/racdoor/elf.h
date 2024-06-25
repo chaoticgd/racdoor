@@ -133,7 +133,7 @@ typedef struct {
 typedef struct {
 	u8 copy_count;
 	u8 fill_count;
-	u8 pad;
+	u8 decompress_count;
 	u8 postload;
 	RacdoorLoadHeader loads[];
 } RacdoorPayloadHeader;

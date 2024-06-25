@@ -2,6 +2,8 @@
 
 #ifdef _HOST
 
+#include <string.h>
+
 ElfFileHeader* parse_elf_header(Buffer object)
 {
 	ElfFileHeader* elf_header = buffer_get(object, 0, sizeof(ElfFileHeader), "ELF file header");

@@ -7,8 +7,8 @@
 #include <string.h>
 #include <time.h>
 
-void inject_rac(SaveSlot* save, Buffer rdx);
-u32 pack_rdx(u8* output, u32 output_size, Buffer rdx);
+void inject_rac(SaveSlot* save, Buffer rdx, int enable_compression);
+u32 pack_rdx(u8* output, u32 output_size, Buffer rdx, int enable_compression);
 
 int main(int argc, char** argv)
 {
@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 	switch (save.game.block_count)
 	{
 		case RAC_GAME_BLOCK_COUNT:
-			inject_rac(&save, rdx);
+			inject_rac(&save, rdx, 1);
 			break;
 		case GC_GAME_BLOCK_COUNT:
 			printf("not yet implemented\n");
@@ -52,7 +52,7 @@ typedef struct {
 	u32 unknown_4;
 } HelpDatum;
 
-void inject_rac(SaveSlot* save, Buffer rdx)
+void inject_rac(SaveSlot* save, Buffer rdx, int enable_compression)
 {
 	/* Lookup special symbols used for configuring the exploit. */
 	u32 help_message = lookup_symbol(rdx, "_racdoor_help_message");
@@ -74,7 +74,10 @@ void inject_rac(SaveSlot* save, Buffer rdx)
 	u8* data = checked_malloc(max_size);
 	memset(data, 0, sizeof(max_size));
 	
-	u32 entry_point_offset = pack_rdx(data, max_size, rdx);
+	u32 entry_point_offset = pack_rdx(data, max_size, rdx, enable_compression);
+	u32 entry_point = payload + entry_point_offset;
+	
+	printf("entry_point: %x\n", entry_point);
 	
 	srand(time(NULL));
 	u32 key = rand();
@@ -83,7 +86,7 @@ void inject_rac(SaveSlot* save, Buffer rdx)
 	
 	/* Generate some assembly code to decrypt the payload. */
 	u8 decryptor_asm[256];
-	u32 decryptor_entry_offset = gen_xor_decryptor((u32*) decryptor_asm, payload, payload_end, key, payload + entry_point_offset);
+	u32 decryptor_entry_offset = gen_xor_decryptor((u32*) decryptor_asm, payload, payload_end, key, entry_point);
 	
 	/* Enable help text so that our exploit runs, but disable the help audio
 	   since playing the same help message again and again would otherwise get
@@ -166,51 +169,129 @@ void inject_rac(SaveSlot* save, Buffer rdx)
 	}
 }
 
-u32 pack_rdx(u8* output, u32 output_size, Buffer rdx)
+typedef enum {
+	SLT_IGNORE,
+	SLT_COPY,
+	SLT_FILL,
+	SLT_DECOMPRESS
+} SectionLoadType;
+
+typedef struct {
+	SectionLoadType type;
+	Buffer compressed;
+} SectionWork;
+
+/* From compression.cpp. */
+void compress_wad(char** dest, unsigned int* dest_size, const char* src, unsigned int src_size, const char* muffin);
+
+u32 pack_rdx(u8* output, u32 output_size, Buffer rdx, int enable_compression)
 {
 	u32 offset = 0;
 	
 	printf("%.2fkb total\n", output_size / 1024.f);
 	
-	CHECK((u64) offset + sizeof(RacdoorPayloadHeader) < output_size, "RDX too big!\n");
+	CHECK((u64) offset + sizeof(RacdoorPayloadHeader) <= output_size, "RDX too big!\n");
 	RacdoorPayloadHeader* payload_header = (RacdoorPayloadHeader*) &output[offset];
 	offset += sizeof(RacdoorPayloadHeader);
 	
 	memset(payload_header, 0, sizeof(RacdoorPayloadHeader));
 	
-	ElfFileHeader* rdx_header = buffer_get(rdx, 0, sizeof(ElfFileHeader), "RDX file header");
-	CHECK(rdx_header->ident_magic == 0x464c457f, "RDX file has bad magic number.\n");
-	CHECK(rdx_header->ident_class == 1, "RDX file isn't 32 bit.\n");
-	CHECK(rdx_header->machine == 8, "RDX file isn't compiled for MIPS.\n");
+	ElfFileHeader* rdx_header = parse_elf_header(rdx);
 	
 	ElfSectionHeader* sections = buffer_get(rdx, rdx_header->shoff, rdx_header->shnum * sizeof(ElfSectionHeader), "RDX section headers");
+	
+	/* Determine how each of the sections in the file should be loaded. */
+	SectionWork* work = checked_malloc(rdx_header->shnum * sizeof(SectionWork));
+	for (u32 i = 0; i < rdx_header->shnum; i++)
+	{
+		/* Skip over sections that shouldn't be included in the output e.g. the
+		  symbol table and the string table. */
+		if (sections[i].addr == 0 || sections[i].size == 0)
+		{
+			work[i].type = SLT_IGNORE;
+			continue;
+		}
+		
+		/* The .bss section is usually marked SHT_NOBITS. */
+		if (sections[i].type == SHT_NOBITS)
+		{
+			work[i].type = SLT_FILL;
+			continue;
+		}
+		
+		int is_uncompressable = 0;
+		
+		/* Test for special section names indicating that the section can't be
+		   compressed. */
+		static const char* uncompressable_sections[] = {
+			".racdoor.loader", /* The loader can't be compressed. */
+			".racdoor.levelmap", /* This section is used by the loader. */
+			".racdoor.fastdecompress" /* This section is used by the loader. */
+		};
+		
+		const char* name = buffer_string(rdx, sections[rdx_header->shstrndx].offset + sections[i].name, "section name");
+		
+		int is_compressable = 1;
+		for (u32 j = 0; j < ARRAY_SIZE(uncompressable_sections); j++)
+		{
+			if (strcmp(uncompressable_sections[j], name) == 0)
+			{
+				is_compressable = 0;
+				break;
+			}
+		}
+		
+		/* Compress the section and see if the output is actually any smaller. */
+		if (is_compressable)
+		{
+			u8* data = buffer_get(rdx, sections[i].offset, sections[i].size, "RDX section");
+			compress_wad(&work[i].compressed.data, &work[i].compressed.size, data, sections[i].size, "");
+			
+			if (work[i].compressed.size >= sections[i].size)
+				is_compressable = 0;
+		}
+		
+		if (is_compressable)
+			work[i].type = SLT_DECOMPRESS;
+		else
+			work[i].type = SLT_COPY;
+	}
 	
 	/* Make room for the load headers. */
 	for (u32 i = 0; i < rdx_header->shnum; i++)
 	{
-		if (sections[i].addr == 0 || sections[i].size == 0)
+		if (work[i].type == SLT_IGNORE)
 			continue;
 		
-		if (sections[i].type != SHT_PROGBITS && sections[i].type != SHT_NOBITS)
-			continue;
-		
-		CHECK((u64) offset + sizeof(RacdoorLoadHeader) < output_size, "RDX too big!\n");
+		CHECK((u64) offset + sizeof(RacdoorLoadHeader) <= output_size, "RDX too big!\n");
 		offset += sizeof(RacdoorLoadHeader);
+	}
+	
+	/* Copy the array of FastDecompress function pointers into the payload. */
+	if (enable_compression)
+	{
+		ElfSectionHeader* fastdecompress_header = lookup_section(rdx, ".racdoor.fastdecompress");
+		u32* fastdecompress_funcs = buffer_get(rdx, fastdecompress_header->offset, fastdecompress_header->size, "FastDecompress pointers");
+		
+		CHECK((u64) offset + fastdecompress_header->size <= output_size, "RDX too big!\n");
+		memcpy(&output[offset], fastdecompress_funcs, fastdecompress_header->size);
+		offset += fastdecompress_header->size;
 	}
 	
 	u32 load_index = 0;
 	u32 entry_point_offset = 0;
 	
-	/* Convert PROGBITS sections to copy headers. */
+	/* Write out all the COPY sections. */
 	for (u32 i = 0; i < rdx_header->shnum; i++)
 	{
-		if (sections[i].addr == 0 || sections[i].size == 0)
+		if (work[i].type != SLT_COPY)
 			continue;
 		
-		int is_entry = rdx_header->entry >= sections[i].addr && rdx_header->entry < (sections[i].addr + sections[i].size);
+		/* Minimum alignment for instructions. */
+		offset = ALIGN(offset, 4);
 		
-		if (sections[i].type != SHT_PROGBITS && !is_entry)
-			continue;
+		if (rdx_header->entry >= sections[i].addr && rdx_header->entry < (sections[i].addr + sections[i].size))
+			entry_point_offset = offset + (rdx_header->entry - sections[i].addr);
 		
 		RacdoorLoadHeader* load_header = &payload_header->loads[load_index++];
 		
@@ -220,27 +301,20 @@ u32 pack_rdx(u8* output, u32 output_size, Buffer rdx)
 		load_header->source = (u16) offset;
 		load_header->size = (u16) sections[i].size;
 		
-		u8* data = buffer_get(rdx, sections[i].offset, sections[i].size, "RDX section header");
-		
-		CHECK((u64) offset + sections[i].size < output_size, "RDX too big!\n");
+		u8* data = buffer_get(rdx, sections[i].offset, sections[i].size, "RDX section");
+		CHECK((u64) offset + sections[i].size <= output_size, "RDX too big!\n");
 		memcpy(&output[offset], data, sections[i].size);
-		
-		if (is_entry)
-			entry_point_offset = offset + (rdx_header->entry - sections[i].addr);
-		
 		offset += sections[i].size;
+		
 		payload_header->copy_count++;
 	}
 	
-	/* Convert NOBITS sections to fill headers. */
+	CHECK(entry_point_offset != 0, "Bad entry point.\n");
+	
+	/* Write out all the FILL sections. */
 	for (u32 i = 0; i < rdx_header->shnum; i++)
 	{
-		if (sections[i].addr == 0 || sections[i].size == 0)
-			continue;
-		
-		int is_entry = rdx_header->entry >= sections[i].addr && rdx_header->entry < sections[i].addr + sections[i].size;
-		
-		if (sections[i].type != SHT_NOBITS || is_entry)
+		if (work[i].type != SLT_FILL)
 			continue;
 		
 		RacdoorLoadHeader* load_header = &payload_header->loads[load_index++];
@@ -252,6 +326,30 @@ u32 pack_rdx(u8* output, u32 output_size, Buffer rdx)
 		load_header->size = (u16) sections[i].size;
 		
 		payload_header->fill_count++;
+	}
+	
+	/* Write out all the DECOMPRESS sections. */
+	for (u32 i = 0; i < rdx_header->shnum; i++)
+	{
+		if (work[i].type != SLT_DECOMPRESS)
+			continue;
+		
+		RacdoorLoadHeader* load_header = &payload_header->loads[load_index++];
+		
+		/* Minimum alignment for DMA transfers. */
+		offset = ALIGN(offset, 16);
+		
+		CHECK(offset <= 0xffff, "Cannot encode load offset.\n");
+		CHECK(sections[i].size <= 0xffff, "Cannot encode load size.\n");
+		load_header->dest = sections[i].addr;
+		load_header->source = (u16) offset;
+		load_header->size = (u16) 0; /* Unused. */
+		
+		CHECK((u64) offset + work[i].compressed.size <= output_size, "RDX too big!\n");
+		memcpy(&output[offset], work[i].compressed.data, work[i].compressed.size);
+		offset += work[i].compressed.size;
+		
+		payload_header->decompress_count++;
 	}
 	
 	printf("%.2fkb used\n", offset / 1024.f);

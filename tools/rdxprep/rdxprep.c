@@ -163,7 +163,7 @@ void process_relocations(ElfSections* sections)
 				const char* name = buffer_string(section->strtab.buffer, symbol->name, "symbol string");
 				
 				/* The index of the symbol in the ELF .symtab section has to be
-				   converted to the equivalent .racdoor.addrtbl index.*/
+				   converted to the equivalent .racdoor.addrtbl index. */
 				u32 runtime_index = lookup_runtime_symbol_index(sections->racdoor_symbolmap.buffer, name);
 				
 				CHECK(reloc_out < reloc_end, "Not enough space for relocations.\n");

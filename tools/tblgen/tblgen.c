@@ -580,7 +580,9 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const 
 	static const char* section_names[] = {
 		"",
 		".racdoor.dummy",
+		".racdoor.levelmap",
 		".racdoor.addrtbl",
+		".racdoor.fastdecompress",
 		".racdoor.relocs",
 		".racdoor.symbolmap",
 		".racdoor.serial",
@@ -591,8 +593,9 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const 
 	
 	/* Determine the layout of the object file that is to be written out. */
 	u32 file_header_size = sizeof(ElfFileHeader);
-	u32 addrtbl_header_size = ALIGN(4 + table->level_count, 4);
-	u32 addrtbl_data_size = dynamic_symbol_count * table->overlay_count * 4;
+	u32 levelmap_size = table->level_count;
+	u32 addrtbl_size = 4 + dynamic_symbol_count * table->overlay_count * 4;
+	u32 fastdecompress_size = table->level_count * 4;
 	u32 relocs_size = relocation_count * sizeof(RacdoorRelocation);
 	u32 symbolmap_head_size = sizeof(RacdoorSymbolMapHead) + dynamic_symbol_count * sizeof(RacdoorSymbolMapEntry);
 	u32 symbolmap_data_size = 0;
@@ -613,9 +616,10 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const 
 			strtab_size += strlen(table->symbols[i].name) + 1;
 	
 	u32 file_header_offset = 0;
-	u32 addrtbl_header_offset = file_header_offset + file_header_size;
-	u32 addrtbl_data_offset = addrtbl_header_offset + addrtbl_header_size;
-	u32 relocs_offset = addrtbl_data_offset + addrtbl_data_size;
+	u32 levelmap_offset = file_header_offset + file_header_size;
+	u32 addrtbl_offset = levelmap_offset + levelmap_size;
+	u32 fastdecompress_offset = addrtbl_offset + addrtbl_size;
+	u32 relocs_offset = fastdecompress_offset + fastdecompress_size;
 	u32 symbolmap_head_offset = relocs_offset + relocs_size;
 	u32 symbolmap_data_offset = symbolmap_head_offset + symbolmap_head_size;
 	u32 serial_offset = symbolmap_data_offset + symbolmap_data_size;
@@ -647,20 +651,21 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const 
 	header->shnum = ARRAY_SIZE(section_names);
 	header->shstrndx = find_string(".shstrtab", section_names, ARRAY_SIZE(section_names));
 	
-	/* Fill in the runtime linking table. */
-	u8* addrtbl_head = (u8*)  &buffer.data[addrtbl_header_offset] ;
-	*(u32*) addrtbl_head = addrtbl_header_size | (dynamic_symbol_count << 8);
-	for (u32 i = 4; i < addrtbl_header_size; i++)
-		addrtbl_head[i] = (u8) table->levels[i - 4];
+	/* Fill in the level to overlay mapping table. */
+	u8* levelmap = &buffer.data[levelmap_offset];
+	for (u32 i = 0; i < table->level_count; i++)
+		levelmap[i] = table->levels[i];
 	
-	u32* addrtbl_data = (u32*) &buffer.data[addrtbl_data_offset];
+	/* Fill in the runtime linking table. */
+	u32* addrtbl = (u32*) &buffer.data[addrtbl_offset];
+	*addrtbl = dynamic_symbol_count;
 	for (u32 i = 0; i < table->overlay_count; i++)
 	{
 		u32 overlay_base = i * dynamic_symbol_count;
 		u32 offset = 0;
 		for (u32 j = 0; j < table->symbol_count; j++)
 			if (table->symbols[j].used && table->symbols[j].overlay)
-				addrtbl_data[overlay_base + offset++] = table->symbols[j].overlay_addresses[i];
+				addrtbl[1 + overlay_base + offset++] = table->symbols[j].overlay_addresses[i];
 	}
 	
 	/* Fill in the symbol mapping table. */
@@ -688,6 +693,23 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const 
 	/* Fill in the serial number. */
 	strcpy(&buffer.data[serial_offset], serial);
 	
+	/* Fill in the array of FastDecompress function pointers. */
+	Symbol* fastdecompress = NULL;
+	for (u32 i = 0; i < table->symbol_count; i++)
+	{
+		if (strcmp(table->symbols[i].name, "FastDecompress") == 0)
+		{
+			fastdecompress = &table->symbols[i];
+			break;
+		}
+	}
+	
+	CHECK(fastdecompress, "No 'FastDecompress' symbol found in CSV table.\n");
+	
+	u32* fastdecompress_funcs = (u32*) &buffer.data[fastdecompress_offset];
+	for (u32 i = 0; i < table->overlay_count; i++)
+		fastdecompress_funcs[i] = fastdecompress->overlay_addresses[i];
+	
 	/* Fill in the section header names. */
 	char* shstrtab = &buffer.data[shstrtab_offset];
 	for (u32 i = 0; i < ARRAY_SIZE(section_names); i++)
@@ -705,10 +727,22 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const 
 			.size = 0,
 			.addralign = 1
 		},
+		/* .racdoor.levelmap */ {
+			.type = SHT_PROGBITS,
+			.offset = levelmap_offset,
+			.size = levelmap_size,
+			.addralign = 1
+		},
 		/* .racdoor.addrtbl */ {
 			.type = SHT_PROGBITS,
-			.offset = addrtbl_header_offset,
-			.size = addrtbl_header_size + addrtbl_data_size,
+			.offset = addrtbl_offset,
+			.size = addrtbl_size,
+			.addralign = 4
+		},
+		/* .racdoor.fastdecompress */ {
+			.type = SHT_PROGBITS,
+			.offset = fastdecompress_offset,
+			.size = fastdecompress_size,
 			.addralign = 4
 		},
 		/* .racdoor.relocs */ {

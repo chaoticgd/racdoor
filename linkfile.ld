@@ -87,11 +87,27 @@ SECTIONS
 		_racdoor_modules_end = .;
 	}
 	
+	/* Level to overlay index mapping table. Cannot be compressed since it is
+	   used by the loader. */
+	.racdoor.levelmap :
+	{
+		_racdoor_levelmap = .;
+		*(.racdoor.levelmap)
+	}
+	
 	/* Runtime address table used for performing relocation. */
 	.racdoor.addrtbl :
 	{
 		_racdoor_addrtbl = .;
 		*(.racdoor.addrtbl)
+	}
+	
+	/* Array of function pointers for the FastDecompress function, one element
+	   for each overlay. Cannot be compressed since it is used by the loader. */
+	.racdoor.fastdecompress :
+	{
+		_racdoor_fastdecompress = .;
+		*(.racdoor.fastdecompress)
 	}
 	
 	/* Runtime relocation table. This is filled in by rdxprep and only contains
