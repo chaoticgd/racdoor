@@ -38,10 +38,8 @@ typedef struct {
 	ElfSection racdoor_symbolmap;
 } ElfSections;
 
-ElfFileHeader* parse_elf_header(Buffer elf);
 ElfSections parse_elf_sections(Buffer elf, ElfFileHeader* header);
 void process_relocations(ElfSections* sections);
-u32 lookup_runtime_symbol_index(const char* name, Buffer symbolmap);
 
 int main(int argc, char** argv)
 {
@@ -57,15 +55,6 @@ int main(int argc, char** argv)
 	process_relocations(&sections);
 	
 	write_file(output_rdx_path, elf);
-}
-
-ElfFileHeader* parse_elf_header(Buffer elf)
-{
-	ElfFileHeader* elf_header = buffer_get(elf, 0, sizeof(ElfFileHeader), "ELF file header");
-	CHECK(elf_header->ident_magic == 0x464c457f, "ELF file has bad magic number.\n");
-	CHECK(elf_header->ident_class == 1, "ELF file isn't 32 bit.\n");
-	CHECK(elf_header->machine == 8, "ELF file isn't compiled for MIPS.\n");
-	return elf_header;
 }
 
 ElfSections parse_elf_sections(Buffer elf, ElfFileHeader* header)
@@ -175,7 +164,7 @@ void process_relocations(ElfSections* sections)
 				
 				/* The index of the symbol in the ELF .symtab section has to be
 				   converted to the equivalent .racdoor.addrtbl index.*/
-				u32 runtime_index = lookup_runtime_symbol_index(name, sections->racdoor_symbolmap.buffer);
+				u32 runtime_index = lookup_runtime_symbol_index(sections->racdoor_symbolmap.buffer, name);
 				
 				CHECK(reloc_out < reloc_end, "Not enough space for relocations.\n");
 				reloc_out->address = section->target.header->addr + reloc_in->offset;
@@ -193,20 +182,4 @@ void process_relocations(ElfSections* sections)
 	}
 	
 	sections->racdoor_relocs.header->size = dynamic_relocation_count * sizeof(RacdoorRelocation);
-}
-
-u32 lookup_runtime_symbol_index(const char* name, Buffer symbolmap)
-{
-	RacdoorSymbolMapHead* head = buffer_get(symbolmap, 0, sizeof(RacdoorSymbolMapHead), "symbol map header");
-	
-	for (u32 i = 0; i < head->symbol_count; i++)
-	{
-		const char* string = buffer_string(symbolmap, head->entries[i].string_offset, "symbol name");
-		if (strcmp(string, name) != 0)
-			continue;
-		
-		return head->entries[i].runtime_index;
-	}
-	
-	ERROR("Undefined symbol '%s'.\n", name);
 }

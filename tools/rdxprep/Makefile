@@ -1,7 +1,7 @@
 RACDOOR = ../..
 
 BIN = rdxprep
-SRCS = rdxprep.c $(RACDOOR)/sdk/linker.c
+SRCS = rdxprep.c $(RACDOOR)/sdk/elf.c $(RACDOOR)/sdk/linker.c
 
 host: rdxprep
 ee:

@@ -3,12 +3,14 @@
 
 #include <racdoor/util.h>
 
-#include <stdlib.h>
-
 typedef struct {
 	char* data;
 	u32 size;
 } Buffer;
+
+#ifdef _HOST
+
+#include <stdlib.h>
 
 static inline Buffer read_file(const char* path)
 {
@@ -70,5 +72,7 @@ static inline Buffer sub_buffer(Buffer buffer, u32 offset, u32 size, const char*
 	};
 	return result;
 }
+
+#endif
 
 #endif

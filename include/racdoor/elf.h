@@ -1,6 +1,7 @@
 #ifndef _RACDOOR_ELF_H
 #define _RACDOOR_ELF_H
 
+#include <racdoor/buffer.h>
 #include <racdoor/util.h>
 
 /* ELF file format. */
@@ -117,6 +118,10 @@ typedef enum {
 	R_MIPS_GPREL32 = 12
 } ElfRelocationType;
 
+ElfFileHeader* parse_elf_header(Buffer object);
+ElfSectionHeader* lookup_section(Buffer object, const char* section);
+u32 lookup_symbol(Buffer object, const char* symbol);
+
 /* Racdoor specific. */
 
 typedef struct {
@@ -147,5 +152,7 @@ typedef struct {
 	u32 address;
 	u32 info;
 } RacdoorRelocation;
+
+u32 lookup_runtime_symbol_index(Buffer symbolmap, const char* name);
 
 #endif

@@ -9,7 +9,6 @@
 
 void inject_rac(SaveSlot* save, Buffer rdx);
 u32 pack_rdx(u8* output, u32 output_size, Buffer rdx);
-u32 lookup_symbol(Buffer object, const char* symbol);
 
 int main(int argc, char** argv)
 {
@@ -259,49 +258,4 @@ u32 pack_rdx(u8* output, u32 output_size, Buffer rdx)
 	printf("%.2fkb left\n", (output_size - offset) / 1024.f);
 	
 	return entry_point_offset;
-}
-
-u32 lookup_symbol(Buffer object, const char* symbol)
-{
-	ElfFileHeader* header = buffer_get(object, 0, sizeof(ElfFileHeader), "ELF header");
-	u32 shstrtab_offset = header->shoff + header->shstrndx * sizeof(ElfSectionHeader);
-	ElfSectionHeader* shstrtab = buffer_get(object, shstrtab_offset, sizeof(ElfSectionHeader), "shstr section header");
-	
-	/* Find the symbol table section. */
-	ElfSectionHeader* symtab = NULL;
-	for (u32 i = 0; i < header->shnum; i++)
-	{
-		u32 section_offset = header->shoff + i * sizeof(ElfSectionHeader);
-		ElfSectionHeader* section = buffer_get(object, section_offset, sizeof(ElfSectionHeader), "section header");
-		
-		const char* name = buffer_string(object, shstrtab->offset + section->name, "section name");
-		if (strcmp(name, ".symtab") == 0)
-			symtab = section;
-	}
-	
-	CHECK(symtab, "No .symtab section.\n");
-	
-	/* Find the string table section. */
-	ElfSectionHeader* strtab = NULL;
-	if (symtab->link != 0)
-	{
-		u32 link_offset = header->shoff + symtab->link * sizeof(ElfSectionHeader);
-		strtab = buffer_get(object, link_offset, sizeof(ElfSectionHeader), "linked section header");
-	}
-	
-	CHECK(strtab, "No linked string table section.\n");
-	
-	/* Lookup the symbol by name. */
-	ElfSymbol* symbols = buffer_get(object, symtab->offset, symtab->size, "symbol table");
-	for (u32 i = 0; i < symtab->size / sizeof(ElfSymbol); i++)
-	{
-		const char* name = buffer_string(object, strtab->offset + symbols[i].name, "symbol name");
-		if (strcmp(name, symbol) == 0)
-		{
-			printf("%s: %x\n", symbol, symbols[i].value);
-			return symbols[i].value;
-		}
-	}
-	
-	ERROR("Undefined symbol '%s'.\n", symbol);
 }

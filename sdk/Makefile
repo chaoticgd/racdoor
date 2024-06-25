@@ -1,9 +1,9 @@
 RACDOOR := ..
 
 LIB = sdk
-SRCS = cleanup.c crypto.c hook.c linker.c loader.s module.c save.c transition.c
+SRCS = cleanup.c crypto.c elf.c hook.c linker.c loader.s module.c save.c transition.c
 
-host: crypto.host.o linker.host.o
+host: crypto.host.o elf.host.o linker.host.o
 ee: sdk.ee.a loader.ee.o
 clean: compileclean archiveclean
 

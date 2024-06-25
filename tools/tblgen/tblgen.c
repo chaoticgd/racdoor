@@ -452,18 +452,7 @@ static u32 parse_object_file(SymbolTable* table, Buffer object)
 	ElfSectionHeader* shstrtab = buffer_get(object, shstrtab_offset, sizeof(ElfSectionHeader), "shstr section header");
 	
 	/* Find the symbol table section. */
-	ElfSectionHeader* symtab = NULL;
-	for (u32 i = 0; i < header->shnum; i++)
-	{
-		u32 section_offset = header->shoff + i * sizeof(ElfSectionHeader);
-		ElfSectionHeader* section = buffer_get(object, section_offset, sizeof(ElfSectionHeader), "section header");
-		
-		const char* name = buffer_string(object, shstrtab->offset + section->name, "section name");
-		if (strcmp(name, ".symtab") == 0)
-			symtab = section;
-	}
-	
-	CHECK(symtab, "No .symtab section.\n");
+	ElfSectionHeader* symtab = lookup_section(object, ".symtab");
 	
 	/* Find the string table section. */
 	ElfSectionHeader* strtab = NULL;
