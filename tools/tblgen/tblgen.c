@@ -419,6 +419,7 @@ typedef struct {
 static u32 parse_archive_file(SymbolTable* table, Buffer archive)
 {
 	u32 offset = 0;
+	u32 relocation_count = 0;
 	
 	CHECK(strncmp(archive.data, "!<arch>\n", 8) == 0, "Invalid archive header.\n");
 	offset += 8;
@@ -439,10 +440,12 @@ static u32 parse_archive_file(SymbolTable* table, Buffer archive)
 		
 		/* Skip over the global symbol table. */
 		if (strcmp(identifier, "") != 0)
-			parse_object_file(table, sub_buffer(archive, offset, file_size, "archive data"));
+			relocation_count += parse_object_file(table, sub_buffer(archive, offset, file_size, "archive data"));
 		
 		offset += ALIGN(file_size, 2);
 	}
+	
+	return relocation_count;
 }
 
 static u32 parse_object_file(SymbolTable* table, Buffer object)
