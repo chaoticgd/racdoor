@@ -438,8 +438,15 @@ static u32 parse_archive_file(SymbolTable* table, Buffer archive)
 		memcpy(identifier, header->identifier, identifier_end - header->identifier);
 		identifier[identifier_end - header->identifier] = '\0';
 		
+		/* The GNU convention for storing long filenames is to make the
+		   identifier field empty except for a decimal index that points into a
+		   list of the real filenames. */
+		int long_filename = identifier_end == header->identifier
+			&& header->identifier[1] >= '0'
+			&& header->identifier[1] <= '9';
+		
 		/* Skip over the global symbol table. */
-		if (strcmp(identifier, "") != 0)
+		if (strcmp(identifier, "") != 0 || long_filename)
 			relocation_count += parse_object_file(table, sub_buffer(archive, offset, file_size, "archive data"));
 		
 		offset += ALIGN(file_size, 2);
