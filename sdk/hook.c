@@ -44,11 +44,6 @@ void uninstall_hook(FuncHook* hook)
 	hook->original_func[0] = hook->trampoline[0];
 	hook->original_func[1] = hook->trampoline[2];
 	
-	/* Reset the trampoline. */
-	hook->trampoline[0] = MIPS_BREAK();
-	hook->trampoline[1] = MIPS_BREAK();
-	hook->trampoline[2] = MIPS_BREAK();
-	
 	/* Flush the instruction cache. */
 	FlushCache(2);
 }

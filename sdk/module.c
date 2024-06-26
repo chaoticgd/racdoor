@@ -1,13 +1,13 @@
 #include <racdoor/module.h>
 
-#include <racdoor/transition.h>
+#include <racdoor/persistence.h>
 
 extern Module _racdoor_modules;
 extern Module _racdoor_modules_end;
 
 void load_modules()
 {
-	install_transition_hooks();
+	install_persistence_hooks();
 	
 	for (Module* module = &_racdoor_modules; module < &_racdoor_modules_end; module++)
 		if (module->load)

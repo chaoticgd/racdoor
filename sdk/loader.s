@@ -114,6 +114,12 @@ unpack:
 	sq $s3, 0x30($sp)
 	sq $ra, 0x40($sp)
 	
+unpack_set_exit_flag:
+	lui $s0, %hi(_racdoor_payload)
+	addiu $s0, $s0, %lo(_racdoor_payload)
+	addiu $s1, $zero, 1
+	sb $s1, 0x3($s0)
+	
 unpack_initial:
 	lui $s0, %hi(_racdoor_payload)
 	addiu $s0, $s0, %lo(_racdoor_payload)
@@ -181,7 +187,7 @@ unpack_decompress_loop:
 	addiu $s1, $s1, 8
 
 # Either jump back to the loader explicitly or return if unpack was called from
-# the transition code.
+# the persistence code.
 unpack_finish:
 	lbu $s1, 0x3($s0)
 	beq $s1, $zero, loader_continue
