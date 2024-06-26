@@ -12,12 +12,29 @@ u32 pack_rdx(u8* output, u32 output_size, Buffer rdx, int enable_compression);
 
 int main(int argc, char** argv)
 {
-	CHECK(argc == 4, "usage: %s <input saveN.bin> <input rdx> <output saveN.bin>\n",
-		argc > 0 ? argv[0] : "inject");
+	const char* input_save_path = NULL;
+	const char* input_rdx_path = NULL;
+	const char* output_save_path = NULL;
+	int enable_compression = 1;
 	
-	const char* input_save_path = argv[1];
-	const char* input_rdx_path = argv[2];
-	const char* output_save_path = argv[3];
+	u32 position = 0;
+	for (int i = 1; i < argc; i++)
+	{
+		if (strcmp(argv[i], "-u") == 0)
+			enable_compression = 0;
+		else
+			switch (position++)
+			{
+				case 0: input_save_path = argv[i]; break;
+				case 1: input_rdx_path = argv[i]; break;
+				case 2: output_save_path = argv[i]; break;
+				default: input_save_path = NULL; /* Print usage message. */
+			}
+	}
+	
+	CHECK(input_save_path && input_rdx_path && output_save_path,
+		"usage: %s <input saveN.bin> <input rdx> <output saveN.bin>\n",
+		argc > 0 ? argv[0] : "inject");
 	
 	Buffer file = read_file(input_save_path);
 	SaveSlot save = parse_save(file);
@@ -27,7 +44,7 @@ int main(int argc, char** argv)
 	switch (save.game.block_count)
 	{
 		case RAC_GAME_BLOCK_COUNT:
-			inject_rac(&save, rdx, 1);
+			inject_rac(&save, rdx, enable_compression);
 			break;
 		case GC_GAME_BLOCK_COUNT:
 			printf("not yet implemented\n");
@@ -219,25 +236,27 @@ u32 pack_rdx(u8* output, u32 output_size, Buffer rdx, int enable_compression)
 			continue;
 		}
 		
-		int is_uncompressable = 0;
+		int is_compressable = enable_compression;
 		
 		/* Test for special section names indicating that the section can't be
 		   compressed. */
-		static const char* uncompressable_sections[] = {
-			".racdoor.loader", /* The loader can't be compressed. */
-			".racdoor.levelmap", /* This section is used by the loader. */
-			".racdoor.fastdecompress" /* This section is used by the loader. */
-		};
-		
-		const char* name = buffer_string(rdx, sections[rdx_header->shstrndx].offset + sections[i].name, "section name");
-		
-		int is_compressable = 1;
-		for (u32 j = 0; j < ARRAY_SIZE(uncompressable_sections); j++)
+		if (is_compressable)
 		{
-			if (strcmp(uncompressable_sections[j], name) == 0)
+			static const char* uncompressable_sections[] = {
+				".racdoor.loader", /* The loader can't be compressed. */
+				".racdoor.levelmap", /* This section is used by the loader. */
+				".racdoor.fastdecompress" /* This section is used by the loader. */
+			};
+			
+			const char* name = buffer_string(rdx, sections[rdx_header->shstrndx].offset + sections[i].name, "section name");
+			
+			for (u32 j = 0; j < ARRAY_SIZE(uncompressable_sections); j++)
 			{
-				is_compressable = 0;
-				break;
+				if (strcmp(uncompressable_sections[j], name) == 0)
+				{
+					is_compressable = 0;
+					break;
+				}
 			}
 		}
 		
