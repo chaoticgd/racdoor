@@ -13,17 +13,17 @@ int MyDrawBoltCount(void* unknown)
 {
 	FontPrintWrapper1(200, 100, 0xff00ffff, "Hello, World!", 13);
 	
-	hook_trampoline(unknown);
+	return hook_trampoline(unknown);
 }
 
-void mod_load()
+void hello_load()
 {
 	install_hook(&hook, DrawBoltCount, MyDrawBoltCount, hook_trampoline);
 }
 
-void mod_unload()
+void hello_unload()
 {
 	
 }
 
-MODULE(mod_load, mod_unload);
+MODULE(hello_load, hello_unload);

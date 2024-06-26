@@ -4,6 +4,7 @@
 #include <racdoor/hook.h>
 #include <racdoor/linker.h>
 #include <racdoor/loader.h>
+#include <racdoor/module.h>
 
 void* ParseBin();
 void* parse_bin_thunk();

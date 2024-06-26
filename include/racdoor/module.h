@@ -7,7 +7,7 @@ typedef struct {
 } Module;
 
 #define MODULE(load, unload) \
-	static Module _module __attribute__ ((section (".racdoor.modules"))) = {load, unload};
+	Module _module_##load __attribute__ ((section (".racdoor.modules"))) = {load, unload};
 
 void load_modules();
 void unload_modules();
