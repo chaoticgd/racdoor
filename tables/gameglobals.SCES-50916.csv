@@ -2,3 +2,4 @@ NAME,TYPE,COMMENT,SIZE,CORE,FRONTEND,FRONTBIN,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14
 HelpLog,OBJECT,,,00141e08,,,,,,,,,,,,,,,,,,,,,
 Level,OBJECT,,,0015ed84,,,,,,,,,,,,,,,,,,,,,
 HelpLogPos,OBJECT,,,0015ee30,,,,,,,,,,,,,,,,,,,,,
+gameMode,OBJECT,,,0015f5a4,,,,,,,,,,,,,,,,,,,,,
