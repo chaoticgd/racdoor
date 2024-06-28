@@ -35,7 +35,6 @@ void install_persistence_hooks()
 
 void* parse_bin_thunk()
 {
-	unload_modules();
 	uninstall_all_hooks();
 	
 	void* startlevel = parse_bin_trampoline();
@@ -55,14 +54,14 @@ void* parse_bin_thunk()
 	/* Apply the relocations for the new level. */
 	apply_relocations();
 	
-	load_modules();
+	install_module_hooks();
+	install_persistence_hooks();
 	
 	return startlevel;
 }
 
 int load_front_data_thunk()
 {
-	unload_modules();
 	uninstall_all_hooks();
 	
 	return load_front_data_trampoline();

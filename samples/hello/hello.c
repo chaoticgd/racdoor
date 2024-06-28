@@ -21,9 +21,4 @@ void hello_load()
 	install_hook(&hook, DrawBoltCount, MyDrawBoltCount, hook_trampoline);
 }
 
-void hello_unload()
-{
-	
-}
-
-MODULE(hello_load, hello_unload);
+MODULE_LOAD_FUNC(hello_load);

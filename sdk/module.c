@@ -1,22 +1,81 @@
+#include <game/bmain.h>
+
 #include <racdoor/module.h>
 
 #include <racdoor/persistence.h>
+#include <racdoor/hook.h>
 
-extern Module _racdoor_modules;
-extern Module _racdoor_modules_end;
+static CallHook load_hook = {};
+static CallHook update_hook = {};
+static CallHook unload_hook = {};
 
-void load_modules()
+/* All relative to the startlevel function. */
+extern void _racdoor_modload_hook_ofs;
+extern void _racdoor_modupdate_hook_ofs;
+extern void _racdoor_modunload_hook_ofs;
+
+static void load_thunk();
+static void update_thunk();
+static void unload_thunk();
+
+typedef void VoidFunc(void);
+
+/* Function pointers to be called just before we enter the main loop. */
+extern VoidFunc* _racdoor_modloadfuncs;
+extern VoidFunc* _racdoor_modloadfuncs_end;
+
+/* Function pointers to be called on every iteration of the main loop. */
+extern VoidFunc* _racdoor_modupdatefuncs;
+extern VoidFunc* _racdoor_modupdatefuncs_end;
+
+/* Function pointers to be called just after we break out of the main loop. */
+extern VoidFunc* _racdoor_modunloadfuncs;
+extern VoidFunc* _racdoor_modunloadfuncs_end;
+
+void install_module_hooks()
 {
-	install_persistence_hooks();
-	
-	for (Module* module = &_racdoor_modules; module < &_racdoor_modules_end; module++)
-		if (module->load)
-			module->load();
+	install_call_hook(&load_hook, (char*) startlevel + (u32) &_racdoor_modload_hook_ofs, load_thunk);
+	install_call_hook(&update_hook, (char*) startlevel + (u32) &_racdoor_modupdate_hook_ofs, update_thunk);
+	install_call_hook(&unload_hook, (char*) startlevel + (u32) &_racdoor_modunload_hook_ofs, unload_thunk);
 }
+
+
+static void load_thunk()
+{
+	load_modules();
+	
+	((void (*)(void)) load_hook.original_func)();
+}
+
+static void update_thunk()
+{
+	update_modules();
+	
+	((void (*)(void)) update_hook.original_func)();
+}
+
+static void unload_thunk()
+{
+	unload_modules();
+	
+	((void (*)(void)) unload_hook.original_func)();
+}
+
+ void load_modules()
+ {
+	for (VoidFunc** func = &_racdoor_modloadfuncs; func < &_racdoor_modloadfuncs_end; func++)
+		(*func)();
+}
+
+void update_modules()
+{
+	for (VoidFunc** func = &_racdoor_modupdatefuncs; func < &_racdoor_modupdatefuncs_end; func++)
+		(*func)();
+}
+
 
 void unload_modules()
 {
-	for (Module* module = &_racdoor_modules; module < &_racdoor_modules_end; module++)
-		if (module->unload)
-			module->unload();
+	for (VoidFunc** func = &_racdoor_modunloadfuncs; func < &_racdoor_modunloadfuncs_end; func++)
+		(*func)();
 }

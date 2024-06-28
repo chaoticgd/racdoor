@@ -82,9 +82,17 @@ SECTIONS
 	/* Function pointers used for loading and unloading modules. */
 	.racdoor.modules :
 	{
-		_racdoor_modules = .;
-		*(.racdoor.modules)
-		_racdoor_modules_end = .;
+		_racdoor_modloadfuncs = .;
+		*(.racdoor.modloadfuncs)
+		_racdoor_modloadfuncs_end = .;
+		
+		_racdoor_modupdatefuncs = .;
+		*(.racdoor.modupdatefuncs)
+		_racdoor_modupdatefuncs_end = .;
+		
+		_racdoor_modunloadfuncs = .;
+		*(.racdoor.modunloadfuncs)
+		_racdoor_modunloadfuncs_end = .;
 	}
 	
 	/* Level to overlay index mapping table. Cannot be compressed since it is

