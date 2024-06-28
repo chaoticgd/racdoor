@@ -24,6 +24,7 @@ typedef double f64;
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 #define ALIGN(value, alignment) (value) + (-(value) & ((alignment) - 1))
+#define STATIC_ASSERT(cond, name) char _static_assert_##name[(cond) ? 0 : -1];
 
 #ifdef _EE
 	#define NULL ((void*) 0)
