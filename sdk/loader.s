@@ -152,7 +152,6 @@ unpack_fill_start:
 unpack_fill_loop:
 	lwu $a0, 0x0($s1)
 	lhu $a1, 0x4($s1)
-	add $a1, $a1, $s0
 	jal memset
 	lhu $a2, 0x6($s1)
 	
