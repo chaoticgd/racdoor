@@ -39,7 +39,6 @@ void install_module_hooks()
 	install_call_hook(&unload_hook, (char*) startlevel + (u32) &_racdoor_modunload_hook_ofs, unload_thunk);
 }
 
-
 static void load_thunk()
 {
 	load_modules();
@@ -72,7 +71,6 @@ void update_modules()
 	for (VoidFunc** func = &_racdoor_modupdatefuncs; func < &_racdoor_modupdatefuncs_end; func++)
 		(*func)();
 }
-
 
 void unload_modules()
 {

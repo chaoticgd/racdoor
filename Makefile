@@ -1,7 +1,7 @@
 # Disable implicit rules.
 MAKEFLAGS += -r
 
-SUBDIRS = sdk tools tables samples
+SUBDIRS = sdk extras tools tables samples
 
 all: host ee
 
