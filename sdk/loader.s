@@ -195,6 +195,9 @@ unpack_finish:
 	beq $s1, $zero, loader_continue
 	nop
 
+unpack_reset_exit_flag:
+	sb $zero, 0x3($s0)
+
 unpack_return:
 	lq $s0, 0x0($sp)
 	lq $s1, 0x10($sp)
