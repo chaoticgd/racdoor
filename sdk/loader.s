@@ -71,8 +71,8 @@ loader_run:
 	jal load_modules
 	nop
 
-# Restore the GPRs so that the processor is in the same state is was when the
-# initial hook was run.
+# Restore the GPRs so that the processor gets into the same state it was in when
+# the initial hook was run.
 loader_restore_regs:
 	lq $t5, 0x60($sp)
 	lq $a2, 0x70($sp)
