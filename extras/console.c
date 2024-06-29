@@ -9,8 +9,10 @@
 #include <string.h>
 
 #define BUFFER_SIZE 1024
+#define LINE_SIZE 128
 
-static char display_buffer[BUFFER_SIZE];
+static char buffer[BUFFER_SIZE];
+static u32 buffer_pos = 0;
 
 void DrawHudElements(void);
 void draw_hud_elements_thunk(void);
@@ -22,34 +24,51 @@ void con_load(void)
 	install_hook(&draw_hud_elements_hook, DrawHudElements, draw_hud_elements_thunk, draw_hud_elements_trampoline);
 }
 
+MODULE_LOAD_FUNC(con_load);
+
 void draw_hud_elements_thunk(void)
 {
-	s32 last_newline = BUFFER_SIZE;
-	s32 line = 0;
+	u32 pos = buffer_pos;
+	s32 line_number = 0;
+	char line[LINE_SIZE];
 	
-	for (s32 i = BUFFER_SIZE; i >= 0; i--)
+	u32 i = pos;
+	do
 	{
-		if (i == 0 || display_buffer[i - 1] == '\n')
+		i = (i + BUFFER_SIZE - 1) % BUFFER_SIZE;
+		
+		if (buffer[i] == '\n')
 		{
-			if (i < BUFFER_SIZE)
-				FontPrintNormal(25, 425 - line * 20, 0xff00ffff, &display_buffer[i], last_newline - i);
+			char c;
+			u32 j = 0;
+			do
+			{
+				c = buffer[(i + 1 + j) % BUFFER_SIZE];
+				line[j] = c;
+				j++;
+			} while (c != '\n' && j < LINE_SIZE);
 			
-			last_newline = i - 1;
-			line++;
+			FontPrintNormal(25, 425 - line_number * 20, 0xff00ffff, line, j - 1);
+			
+			line_number++;
 		}
-	}
+	} while (i != pos);
 	
 	draw_hud_elements_trampoline();
 }
 
 void con_puts(const char* string)
 {
-	int size = strlen(string);
+	int pos = buffer_pos;
 	
-	for (int i = 0; i < BUFFER_SIZE - size; i++)
-		display_buffer[i] = display_buffer[i + size];
+	size_t size = strlen(string);
+	for (size_t i = 0; i < size; i++)
+	{
+		buffer[pos] = string[i];
+		pos = (pos + 1) % BUFFER_SIZE;
+	}
 	
-	memcpy(display_buffer + BUFFER_SIZE - size, string, size);
+	buffer[pos] = '\n';
+	
+	buffer_pos = pos;
 }
-
-MODULE_LOAD_FUNC(con_load);

@@ -261,6 +261,5 @@ int hero_set_state_thunk(HERO_STATE_ENUM new_state, int unknown)
 	else
 		con_puts("UNKNOWN");
 	con_puts(")\n");
-	
 	return hero_set_state_trampoline(new_state, unknown);
 }
