@@ -4,6 +4,46 @@
 #include <racdoor/hook.h>
 #include <racdoor/module.h>
 
+static const char* hero_type_strings[] = {
+	/* [0] = */ "IDLE",
+	/* [1] = */ "WALK",
+	/* [2] = */ "FALL",
+	/* [3] = */ "LEDGE",
+	/* [4] = */ "JUMP",
+	/* [5] = */ "GLIDE",
+	/* [6] = */ "ATTACK",
+	/* [7] = */ "GET_HIT",
+	/* [8] = */ "SHOOT",
+	/* [9] = */ "BUSY",
+	/* [10] = */ "BOUNCE",
+	/* [11] = */ "STOMP",
+	/* [12] = */ "CROUCH",
+	/* [13] = */ "GRAPPLE",
+	/* [14] = */ "SWING",
+	/* [15] = */ "GRIND",
+	/* [16] = */ "SLIDE",
+	/* [17] = */ "SWIM",
+	/* [18] = */ "SURF",
+	/* [19] = */ "HYDRO",
+	/* [20] = */ "DEATH",
+	/* [21] = */ "BOARD",
+	/* [22] = */ "RACEBOARD",
+	/* [23] = */ "SPIN",
+	/* [24] = */ "NPC",
+	/* [25] = */ "QUICKSAND",
+	/* [26] = */ "ZIP",
+	/* [27] = */ "HOLO",
+	/* [28] = */ "CHARGE",
+	/* [29] = */ "ROCKET_HOVER",
+	/* [30] = */ "JET",
+	/* [31] = */ "RACEBIKE",
+	/* [32] = */ "SPEEDBOAT",
+	/* [33] = */ "PULL",
+	/* [34] = */ "LATCH",
+	/* [36] = */ "LADDER",
+	/* [37] = */ "SKYDIVE"
+};
+
 static const char* hero_state_strings[] = {
 	/* [0] = */ "IDLE",
 	/* [1] = */ "LOOK",
@@ -180,25 +220,47 @@ static const char* hero_state_strings[] = {
 
 STATIC_ASSERT(ARRAY_SIZE(hero_state_strings) == 156, hero_state_strings_not_contiguous);
 
+FuncHook hero_set_type_hook = {};
+TRAMPOLINE(hero_set_type_trampoline, int);
+int hero_set_type_thunk(char new_type, HERO_STATE_ENUM new_state, int unknown);
+
 FuncHook hero_set_state_hook = {};
 TRAMPOLINE(hero_set_state_trampoline, int);
-int hero_set_state_thunk(int hero_state, int unknown);
+int hero_set_state_thunk(HERO_STATE_ENUM new_state, int unknown);
 
 void heromonitor_load(void)
 {
+	install_hook(&hero_set_type_hook, hero_SetType, hero_set_type_thunk, hero_set_type_trampoline);
 	install_hook(&hero_set_state_hook, hero_SetState, hero_set_state_thunk, hero_set_state_trampoline);
 }
 
 MODULE_LOAD_FUNC(heromonitor_load);
 
-int hero_set_state_thunk(int hero_state, int unknown)
+int hero_set_type_thunk(char new_type, HERO_STATE_ENUM new_state, int unknown)
 {
-	con_puts("hero_SetState(");
-	if (hero_state >= 0 && hero_state < ARRAY_SIZE(hero_state_strings))
-		con_puts(hero_state_strings[hero_state]);
+	con_puts("hero_SetType(");
+	if (new_type >= 0 && new_type < ARRAY_SIZE(hero_type_strings))
+		con_puts(hero_type_strings[(int) new_type]);
+	else
+		con_puts("UNKNOWN");
+	con_puts(",");
+	if (new_state >= 0 && new_state < ARRAY_SIZE(hero_state_strings))
+		con_puts(hero_state_strings[new_state]);
 	else
 		con_puts("UNKNOWN");
 	con_puts(")\n");
 	
-	return hero_set_state_trampoline(hero_state, unknown);
+	return hero_set_type_trampoline(new_type, new_state, unknown);
+}
+
+int hero_set_state_thunk(HERO_STATE_ENUM new_state, int unknown)
+{
+	con_puts("hero_SetState(");
+	if (new_state >= 0 && new_state < ARRAY_SIZE(hero_state_strings))
+		con_puts(hero_state_strings[new_state]);
+	else
+		con_puts("UNKNOWN");
+	con_puts(")\n");
+	
+	return hero_set_state_trampoline(new_state, unknown);
 }
