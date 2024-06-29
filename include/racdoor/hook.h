@@ -19,9 +19,9 @@ typedef struct _FuncHook {
 		".text\n" \
 		".global " #name "\n" \
 		#name ":\n" \
-		"break\n" /* First original instruction. */ \
-		"break\n" /* Jump to the original function. */ \
-		"break\n" /* Second original instruction. */ \
+		"teq $zero, $zero\n" /* First original instruction. */ \
+		"teq $zero, $zero\n" /* Jump to the original function. */ \
+		"teq $zero, $zero\n" /* Second original instruction. */ \
 	);
 
 /* Patch the start of the original function with a jump instruction pointing
