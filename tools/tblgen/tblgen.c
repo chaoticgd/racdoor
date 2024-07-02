@@ -19,6 +19,7 @@ typedef struct {
 	u32 frontend_address;
 	u32 frontbin_address;
 	u32 overlay_addresses[MAX_OVERLAYS];
+	u32 highest_address;
 	s32 runtime_index;
 	s8 overlay;
 	s8 used;
@@ -69,6 +70,8 @@ static SymbolTable parse_table(Buffer input);
 static u32 parse_table_header(const char** p, SymbolTable* table, Column* columns);
 static u32 parse_archive_file(SymbolTable* table, Buffer archive);
 static u32 parse_object_file(SymbolTable* table, Buffer object);
+static void sort_symbols(SymbolTable* table);
+static int symbol_comparator(const void* lhs, const void* rhs);
 static void map_symbols_to_runtime_indices(SymbolTable* table);
 static void print_table(SymbolTable* table);
 static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const char* serial);
@@ -123,6 +126,9 @@ int main(int argc, char** argv)
 			relocation_count += parse_object_file(&table, input_files[i]);
 		else
 			ERROR("Cannot determine type of input file '%s'.\n", input_file_paths[i]);
+	
+	/* Sort all the symbols by their highest addresses. */
+	sort_symbols(&table);
 	
 	/* Determine where each symbol lives in the runtime address table and count
 	   the number of symbols to be included. */
@@ -521,6 +527,28 @@ static u32 parse_object_file(SymbolTable* table, Buffer object)
 	}
 	
 	return relocation_count;
+}
+
+static void sort_symbols(SymbolTable* table)
+{
+	for (u32 i = 0; i < table->symbol_count; i++)
+	{
+		Symbol* symbol = &table->symbols[i];
+		symbol->highest_address = MAX(symbol->core_address, symbol->highest_address);
+		symbol->highest_address = MAX(symbol->spcore_address, symbol->highest_address);
+		symbol->highest_address = MAX(symbol->mpcore_address, symbol->highest_address);
+		symbol->highest_address = MAX(symbol->frontend_address, symbol->highest_address);
+		symbol->highest_address = MAX(symbol->frontbin_address, symbol->highest_address);
+		for (u32 j = 0; j < table->overlay_count; j++)
+			symbol->highest_address = MAX(symbol->overlay_addresses[j], symbol->highest_address);
+	}
+	
+	qsort(table->symbols, table->symbol_count, sizeof(Symbol), symbol_comparator);
+}
+
+static int symbol_comparator(const void* lhs, const void* rhs)
+{
+	return ((Symbol*) lhs)->highest_address > ((Symbol*) rhs)->highest_address;
 }
 
 static void map_symbols_to_runtime_indices(SymbolTable* table)
