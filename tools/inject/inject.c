@@ -1,5 +1,6 @@
 #include <racdoor/crypto.h>
 #include <racdoor/elf.h>
+#include <racdoor/exploit.h>
 #include <racdoor/mips.h>
 #include <racdoor/save.h>
 #include <racdoor/util.h>
@@ -63,12 +64,6 @@ int main(int argc, char** argv)
 	write_file(output_save_path, file);
 }
 
-typedef struct {
-	u16 flag;
-	u16 unknown_2;
-	u32 unknown_4;
-} HelpDatum;
-
 void inject_rac(SaveSlot* save, Buffer rdx, int enable_compression)
 {
 	/* Lookup special symbols used for configuring the exploit. */
@@ -91,78 +86,61 @@ void inject_rac(SaveSlot* save, Buffer rdx, int enable_compression)
 	u8* data = checked_malloc(max_size);
 	memset(data, 0, sizeof(max_size));
 	
-	u32 entry_point_offset = pack_rdx(data, max_size, rdx, enable_compression);
-	u32 entry_point = payload + entry_point_offset;
+	u32 entry_offset = pack_rdx(data, max_size, rdx, enable_compression);
+	u32 entry = payload + entry_offset;
 	
-	printf("entry_point: %x\n", entry_point);
+	printf("entry: %x\n", entry);
 	
 	srand(time(NULL));
 	u32 key = rand();
 	
+	printf("key: %x\n", key);
+	
 	xor_crypt((u32*) data, (u32*) (data + max_size), key);
 	
-	/* Generate some assembly code to decrypt the payload. */
-	u8 decryptor_asm[256];
-	u32 decryptor_entry_offset = gen_xor_decryptor((u32*) decryptor_asm, payload, payload_end, key, entry_point);
+	/* Gather together a bunch of variables that are needed to setup the initial
+	   hook. This is all explained in the arm function itself. */
+	ExploitParams params;
 	
-	/* Enable help text so that our exploit runs, but disable the help audio
-	   since playing the same help message again and again would otherwise get
-	   quite repetitive. */
 	SaveBlock* voice_on = lookup_block(&save->game, BLOCK_HelpVoiceOn);
 	SaveBlock* text_on = lookup_block(&save->game, BLOCK_HelpTextOn);
 	CHECK(voice_on->size == 1, "Incorrectly sized VoiceOn block.\n");
 	CHECK(text_on->size == 1, "Incorrectly sized TextOn block.\n");
-	*(u8*) voice_on->data = 0;
-	*(u8*) text_on->data = 1;
-	
-	/* TODO: More than 8 items must be unlocked for the help message we want to
-	   use to be run. */
-	
-	/* Disable all the help messages except for the one we want to use to
-	   trigger the initial out of bounds write. */
+	params.help_voice_on = (char*) voice_on->data;
+	params.help_text_on = (char*) text_on->data;
 	
 	SaveBlock* help_data_messages = lookup_block(&save->game, BLOCK_HelpDataMessages);
-	for (u32 i = 0; i < help_data_messages->size / sizeof(HelpDatum); i++)
-	{
-		HelpDatum* message = &((HelpDatum*) help_data_messages->data)[i];
-		message->flag = (i == help_message) ? 0 : -1;
-		message->unknown_2 = 0;
-		message->unknown_4 = 0;
-	}
+	params.help_data_messages = (HelpDatum*) help_data_messages->data;
+	params.help_data_messages_count = help_data_messages->size / sizeof(HelpDatum);
+	params.enabled_help_message = help_message;
 	
 	SaveBlock* help_data_gadgets = lookup_block(&save->game, BLOCK_HelpDataGadgets);
-	for (u32 i = 0; i < help_data_gadgets->size / sizeof(HelpDatum); i++)
-	{
-		HelpDatum* message = &((HelpDatum*) help_data_gadgets->data)[i];
-		message->flag = -1;
-		message->unknown_2 = 0;
-		message->unknown_4 = 0;
-	}
+	params.help_data_gadgets = (HelpDatum*) help_data_gadgets->data;
+	params.help_data_gadgets_count = help_data_gadgets->size / sizeof(HelpDatum);
+	params.enabled_help_gadget = help_gadget;
 	
 	SaveBlock* help_data_misc = lookup_block(&save->game, BLOCK_HelpDataMisc);
-	for (u32 i = 0; i < help_data_misc->size / sizeof(HelpDatum); i++)
-	{
-		HelpDatum* message = &((HelpDatum*) help_data_misc->data)[i];
-		message->flag = (i == help_gadget) ? 0 : -1;
-		message->unknown_2 = 0;
-		message->unknown_4 = 0;
-	}
+	params.help_data_misc = (HelpDatum*) help_data_misc->data;
+	params.help_data_misc_count = help_data_misc->size / sizeof(HelpDatum);
 	
-	/* Adjust the HelpLogPos variable so that the help message index is written
-	   over the high byte of the immediate field from a relative branch
-	   instruction such as to make the processor jump into and start executing
-	   code loaded from the memory card. */
 	SaveBlock* help_log_pos = lookup_block(&save->game, BLOCK_HelpLogPos);
 	CHECK(help_log_pos->size == 4, "Incorrectly sized HelpLogPos block.\n");
-	*(u32*) help_log_pos->data = (initial_hook + 1) - help_log;
+	params.help_log_pos = (int*) help_log_pos->data;
 	
-	/* Because we cannot choose exactly where in the memory card data the
-	   processor will jump to, we setup a trampoline to jump to a more desirable
-	   location. */
+	params.help_log = help_log;
+	params.initial_hook = initial_hook;
+	
 	SaveBlock* trampoline_save = lookup_block(&save->game, trampoline_block);
-	CHECK((u64) trampoline_offset + 8 < trampoline_save->size, "Symbol _racdoor_target_offset is too big.\n");
-	*(u32*) &trampoline_save->data[trampoline_offset + 0] = MIPS_J(decryptor + decryptor_entry_offset);
-	*(u32*) &trampoline_save->data[trampoline_offset + 4] = MIPS_NOP();
+	CHECK((u64) trampoline_offset + 8 <= trampoline_save->size, "Symbol _racdoor_target_offset is too big.\n");
+	params.trampoline = (u32*) &trampoline_save->data[trampoline_offset];
+	params.trampoline_target = decryptor + DECRYPTOR_ENTRY_OFFSET;
+	
+	/* Setup the initial hook. */
+	arm(&params);
+	
+	/* Generate some assembly code to decrypt the payload. */
+	u8 decryptor_asm[256];
+	gen_xor_decryptor((u32*) decryptor_asm, payload, payload_end, entry, key);
 	
 	/* Pack the decryptor into the save file. */
 	u64 decryptor_asm_offset = 0;
@@ -182,7 +160,7 @@ void inject_rac(SaveSlot* save, Buffer rdx, int enable_compression)
 		memcpy(dest->data, data + i * block_size, block_size);
 		
 		u32 offset = (u32) (dest->data - (char*) save->header);
-		printf("Written block for level %d at 0x%x.\n", i, offset);
+		printf("Written payload block for level %d at 0x%x.\n", i, offset);
 	}
 }
 

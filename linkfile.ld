@@ -22,8 +22,8 @@ SECTIONS
 	   the operating system or OPL. */
 	. = 0x000d0000;
 	
-	/* Position independent assembly code that loads the other sections by
-	   copying or zeroing them. */
+	/* Assembly code that loads the other sections by copying, filling or
+	   decompressing them. */
 	.racdoor.loader :
 	{
 		/* EE hardware errata: Prevent code and data from being too close. */

@@ -9,8 +9,8 @@
 enum SaveBlockType {
 	BLOCK_Level = 0,
 	BLOCK_HelpDataMessages = 16,
-	BLOCK_HelpDataMisc = 17,
-	BLOCK_HelpDataGadgets = 18,
+	BLOCK_HelpDataGadgets = 17,
+	BLOCK_HelpDataMisc = 18,
 	BLOCK_HelpVoiceOn = 28,
 	BLOCK_HelpTextOn = 29,
 	BLOCK_HelpLog = 1010,

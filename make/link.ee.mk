@@ -8,7 +8,7 @@ DISS := $(patsubst %,$(BIN).%.dis,$(basename $(SERIALS)))
 # loaded from the provided CSV file and some custom sections for all of the
 # overlay symbols.
 .PRECIOUS: $(BIN).%.tbl
-$(BIN).%.tbl: $(TBLGEN) $(OBJS) $(RACDOOR)/tables/output/%.csv
+$(BIN).%.tbl: $(TBLGEN) $(OBJS) $(LIBS) $(RACDOOR)/tables/output/%.csv
 	$(TBLGEN) $(OBJS) $(LIBS) -t $(RACDOOR)/tables/output/$*.csv -s $* -o $@ -v
 
 # Perform partial linking with the -r option passed to GNU ld. This will combine
@@ -23,7 +23,7 @@ $(BIN).%.elf: $(RACDOOR)/sdk/loader.ee.o $(OBJS) $(LIBS) $(BIN).%.tbl $(RACDOOR)
 $(BIN).%.rdx: $(RDXPREP) $(BIN).%.elf
 	$(RDXPREP) $(BIN).$*.elf $@
 
-# Automatically generate diassemblies for all the RDX files.
+# Automatically generate disassemblies for all the RDX files.
 $(BIN).%.dis: $(BIN).%.rdx
 	$(OBJDUMP) -D $(BIN).$*.rdx > $@
 

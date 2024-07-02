@@ -36,6 +36,16 @@ typedef double f64;
 #define CHECK(condition, ...) if(!(condition)) { ERROR(__VA_ARGS__); }
 
 #ifdef _HOST
+	#define HOST_CHECK(...) CHECK(__VA_ARGS__)
+	#define EE_CHECK(...)
+#endif
+
+#ifdef _EE
+	#define HOST_CHECK(...)
+	#define EE_CHECK(...) CHECK(__VA_ARGS__)
+#endif
+
+#ifdef _HOST
 	static inline void* checked_malloc(unsigned long size)
 	{
 		void* ptr = malloc(size);

@@ -33,7 +33,7 @@ loader_save_regs:
 	sq $t6, 0x130($sp)
 	sq $t9, 0x1b0($sp)
 	sq $a0, 0xf0($sp)
-	sq $s4, 0x30($sp)
+	# sq $s4, 0x30($sp)
 	sq $t4, 0x0($sp)
 	sq $v1, 0x20($sp)
 	sq $at, 0xe0($sp)
@@ -58,12 +58,20 @@ loader_continue:
 	addiu $a0, $zero, 0
 	jal FlushCache
 	addiu $a0, $zero, 2
+# Stash the key away for later.
+	lui $t0, %hi(payload_key)
+	sw $s4, %lo(payload_key)($t0)
+# Now we jump to the copy of the loader that was just unpacked so that the
+# disarm function called below can re-encrypt the payload to prepare it for
+# being written to the save file again.
+	j loader_run
+	add $s4, $zero, $zero
 
 loader_run:
 	jal apply_relocations
 	nop
-	jal cleanup
-	nop
+	jal disarm
+	addiu $a0, $zero, 1
 	jal install_module_hooks
 	nop
 	jal install_persistence_hooks
