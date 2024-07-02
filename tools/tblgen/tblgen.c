@@ -94,11 +94,23 @@ int main(int argc, char** argv)
 	for (int i = 1; i < argc; i++)
 	{
 		if (strcmp(argv[i], "-t") == 0)
-			input_table = read_file(argv[++i]);
+		{
+			i++;
+			CHECK(i < argc, "Expected input table path.\n");
+			input_table = read_file(argv[i]);
+		}
 		else if (strcmp(argv[i], "-s") == 0)
-			serial = argv[++i];
+		{
+			i++;
+			CHECK(i < argc, "Expected serial.\n");
+			serial = argv[i];
+		}
 		else if (strcmp(argv[i], "-o") == 0)
-			output_object_path = argv[++i];
+		{
+			i++;
+			CHECK(i < argc, "Expected output path.\n");
+			output_object_path = argv[i];
+		}
 		else if (strcmp(argv[i], "-v") == 0)
 			verbose = 1;
 		else
