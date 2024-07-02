@@ -1,9 +1,9 @@
 RACDOOR = ../..
 
-BIN = rdxprep
-SRCS = rdxprep.c $(RACDOOR)/sdk/elf.c $(RACDOOR)/sdk/linker.c
+BIN = rdxlink
+SRCS = rdxlink.c $(RACDOOR)/sdk/elf.c $(RACDOOR)/sdk/linker.c
 
-host: rdxprep
+host: rdxlink
 ee:
 clean: compileclean linkclean
 

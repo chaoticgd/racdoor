@@ -20,8 +20,8 @@ $(BIN).%.elf: $(RACDOOR)/sdk/loader.ee.o $(OBJS) $(LIBS) $(BIN).%.tbl $(RACDOOR)
 
 # Apply relocations for static symbols and copy relocations for dynamic symbols
 # into the .racdoor.relocs section so that they can be applied at runtime.
-$(BIN).%.rdx: $(RDXPREP) $(BIN).%.elf
-	$(RDXPREP) $(BIN).$*.elf $@
+$(BIN).%.rdx: $(RDXLINK) $(BIN).%.elf
+	$(RDXLINK) $(BIN).$*.elf $@
 
 # Automatically generate disassemblies for all the RDX files.
 $(BIN).%.dis: $(BIN).%.rdx
