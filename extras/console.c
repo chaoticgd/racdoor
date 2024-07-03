@@ -37,7 +37,7 @@ void draw_hud_elements_thunk(void)
 	{
 		i = (i + BUFFER_SIZE - 1) % BUFFER_SIZE;
 		
-		if (buffer[i] == '\n')
+		if (buffer[i] == '\0' || buffer[i] == '\n')
 		{
 			char c;
 			u32 j = 0;
@@ -46,13 +46,13 @@ void draw_hud_elements_thunk(void)
 				c = buffer[(i + 1 + j) % BUFFER_SIZE];
 				line[j] = c;
 				j++;
-			} while (c != '\n' && j < LINE_SIZE);
+			} while (c != '\0' && c != '\n' && j < LINE_SIZE);
 			
 			FontPrintNormal(25, 425 - line_number * 20, 0xff00ffff, line, j - 1);
 			
 			line_number++;
 		}
-	} while (i != pos);
+	} while (i != pos && buffer[i] != '\0');
 	
 	draw_hud_elements_trampoline();
 }
@@ -68,7 +68,7 @@ void con_puts(const char* string)
 		pos = (pos + 1) % BUFFER_SIZE;
 	}
 	
-	buffer[pos] = '\n';
+	buffer[pos] = '\0';
 	
 	buffer_pos = pos;
 }
