@@ -35,9 +35,6 @@ ElfSectionHeader* lookup_section(Buffer object, const char* section)
 u32 lookup_symbol(Buffer object, const char* symbol)
 {
 	ElfFileHeader* header = parse_elf_header(object);
-	u32 shstrtab_offset = header->shoff + header->shstrndx * sizeof(ElfSectionHeader);
-	ElfSectionHeader* shstrtab = buffer_get(object, shstrtab_offset, sizeof(ElfSectionHeader), "shstr section header");
-	
 	ElfSectionHeader* symtab = lookup_section(object, ".symtab");
 	
 	/* Find the string table section. */

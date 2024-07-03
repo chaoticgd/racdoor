@@ -476,10 +476,6 @@ static u32 parse_archive_file(SymbolTable* table, Buffer archive)
 static u32 parse_object_file(SymbolTable* table, Buffer object)
 {
 	ElfFileHeader* header = buffer_get(object, 0, sizeof(ElfFileHeader), "ELF header");
-	u32 shstrtab_offset = header->shoff + header->shstrndx * sizeof(ElfSectionHeader);
-	ElfSectionHeader* shstrtab = buffer_get(object, shstrtab_offset, sizeof(ElfSectionHeader), "shstr section header");
-	
-	/* Find the symbol table section. */
 	ElfSectionHeader* symtab = lookup_section(object, ".symtab");
 	
 	/* Find the string table section. */
@@ -702,7 +698,7 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const 
 	header->shstrndx = find_string(".shstrtab", section_names, ARRAY_SIZE(section_names));
 	
 	/* Fill in the level to overlay mapping table. */
-	u8* levelmap = &buffer.data[levelmap_offset];
+	u8* levelmap = (u8*) &buffer.data[levelmap_offset];
 	for (u32 i = 0; i < table->level_count; i++)
 		levelmap[i] = table->levels[i];
 	

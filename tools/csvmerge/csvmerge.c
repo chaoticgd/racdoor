@@ -3,8 +3,6 @@
 
 #include <string.h>
 
-static const char* parse_headers(Buffer* csvs, u32 count);
-
 int main(int argc, char** argv)
 {
 	const char* output_path = NULL;

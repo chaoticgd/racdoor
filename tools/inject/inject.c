@@ -71,7 +71,6 @@ void inject_rac(SaveSlot* save, Buffer rdx, int enable_compression)
 	u32 help_gadget = lookup_symbol(rdx, "_racdoor_help_gadget");
 	u32 help_log = lookup_symbol(rdx, "_racdoor_help_log");
 	u32 initial_hook = lookup_symbol(rdx, "_racdoor_initial_hook");
-	u32 trampoline = lookup_symbol(rdx, "_racdoor_trampoline");
 	u32 trampoline_offset = lookup_symbol(rdx, "_racdoor_trampoline_offset");
 	u32 trampoline_block = lookup_symbol(rdx, "_racdoor_trampoline_block");
 	u32 decryptor = lookup_symbol(rdx, "_racdoor_decryptor");
@@ -242,7 +241,7 @@ u32 pack_rdx(u8* output, u32 output_size, Buffer rdx, int enable_compression)
 		if (is_compressable)
 		{
 			u8* data = buffer_get(rdx, sections[i].offset, sections[i].size, "RDX section");
-			compress_wad(&work[i].compressed.data, &work[i].compressed.size, data, sections[i].size, "");
+			compress_wad(&work[i].compressed.data, &work[i].compressed.size, (const char*) data, sections[i].size, "");
 			
 			if (work[i].compressed.size >= sections[i].size)
 				is_compressable = 0;

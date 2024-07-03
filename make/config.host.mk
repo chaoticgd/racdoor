@@ -6,4 +6,4 @@ OBJDUMP = objdump
 
 INCLUDES += -I$(RACDOOR)/include
 
-COMPILEFLAGS += -std=c99 -O2 -D_HOST
+COMPILEFLAGS += -std=c99 -O2 -Wall -Werror -D_HOST
