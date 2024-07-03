@@ -4,9 +4,9 @@
 #include <racdoor/util.h>
 
 #define DECRYPTOR_ENTRY_OFFSET 5
-#define DECRYPTOR_KEY_HIGH_OFFSET 14
-#define DECRYPTOR_KEY_LOW_OFFSET 15
-#define DECRYPTOR_SIZE 34
+#define DECRYPTOR_KEY_HIGH_OFFSET 13
+#define DECRYPTOR_KEY_LOW_OFFSET 18
+#define DECRYPTOR_SIZE 38
 
 /* Encrypt/decrypt a buffer of data. */
 void xor_crypt(u32* begin, u32* end, u32 key);
