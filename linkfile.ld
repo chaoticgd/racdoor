@@ -47,6 +47,12 @@ SECTIONS
 		*(.data)
 		*(.data.*)
 		*(.gnu.linkonce.d*)
+		
+		/* Function hooks that are installed automatically. */
+		. = ALIGN(8);
+		_racdoor_autohooks = .;
+		*(.racdoor.autohooks)
+		_racdoor_autohooks_end = .;
 	}
 	
 	.rodata ALIGN(128) :

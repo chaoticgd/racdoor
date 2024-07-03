@@ -3,6 +3,7 @@
 
 #include <racdoor/util.h>
 
+/* A function entry point hook. */
 typedef struct _FuncHook {
 	struct _FuncHook* prev;
 	struct _FuncHook* next;
@@ -16,12 +17,13 @@ typedef struct _FuncHook {
 	returntype name(); \
 	__asm__ \
 	( \
-		".text\n" \
+		".pushsection .text\n" \
 		".global " #name "\n" \
 		#name ":\n" \
 		"teq $zero, $zero\n" /* First original instruction. */ \
 		"teq $zero, $zero\n" /* Jump to the original function. */ \
 		"teq $zero, $zero\n" /* Second original instruction. */ \
+		".popsection\n" \
 	);
 
 /* Patch the start of the original function with a jump instruction pointing
@@ -46,7 +48,17 @@ void install_call_hook(CallHook* hook, void* instruction, void* replacement_func
 /* Restore the function call to its original target. */
 void uninstall_call_hook(CallHook* hook);
 
+/* Automatic hook installation macro. */
+#define AUTO_HOOK(original_func, thunk, trampoline, returntype) \
+	TRAMPOLINE(trampoline, returntype); \
+	FuncHook original_func##_hook __attribute__ ((section (".racdoor.autohooks"))) = { \
+		NULL, (FuncHook*) thunk, (u32*) original_func, (u32*) trampoline \
+	};
+
+/* Install hooks defined using the AUTO_HOOK macro. */
+void install_auto_hooks(void);
+
 /* Restore all functions that have been hooked. */
-void uninstall_all_hooks();
+void uninstall_all_hooks(void);
 
 #endif

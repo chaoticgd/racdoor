@@ -1,5 +1,3 @@
-#include <racdoor/persistence.h>
-
 #include <game/memcard.h>
 
 #include <racdoor/crypto.h>
@@ -13,31 +11,25 @@
 
 void* ParseBin();
 void* parse_bin_thunk();
-FuncHook parse_bin_hook = {};
-TRAMPOLINE(parse_bin_trampoline, void*);
+AUTO_HOOK(ParseBin, parse_bin_thunk, parse_bin_trampoline, void*);
 
 int LoadFrontData();
 int load_front_data_thunk();
-FuncHook load_front_data_hook = {};
-TRAMPOLINE(load_front_data_trampoline, int);
+AUTO_HOOK(LoadFrontData, load_front_data_thunk, load_front_data_trampoline, int);
 
 int memcard_restore_data_thunk(char* addr, int index, mc_data* mcd);
-FuncHook memcard_restore_data_hook = {};
-TRAMPOLINE(memcard_restore_data_trampoline, int);
+AUTO_HOOK(memcard_RestoreData, memcard_restore_data_thunk, memcard_restore_data_trampoline, int);
 
 void memcard_make_whole_save_thunk(char *addr);
-FuncHook memcard_make_whole_save_hook = {};
-TRAMPOLINE(memcard_make_whole_save_trampoline, void);
+AUTO_HOOK(memcard_MakeWholeSave, memcard_make_whole_save_thunk, memcard_make_whole_save_trampoline, void);
 
 int memcard_save_thunk(int force, int level);
-FuncHook memcard_save_hook = {};
-TRAMPOLINE(memcard_save_trampoline, int);
+AUTO_HOOK(memcard_Save, memcard_save_thunk, memcard_save_trampoline, int);
 
 void prepare_save();
 
 void pack_map_mask_thunk();
-FuncHook pack_map_mask_hook = {};
-TRAMPOLINE(pack_map_mask_trampoline, void);
+AUTO_HOOK(PackMapMask, pack_map_mask_thunk, pack_map_mask_trampoline, void);
 
 extern void FlushCache(int mode);
 
@@ -51,23 +43,6 @@ u32 payload_key = 0; /* Filled in by the loader. */
 u32 payload_entry = 0; /* Filled in by the disarm function. */
 
 static char should_uninstall = 0;
-
-void install_persistence_hooks()
-{
-	/* Level transition hook. */
-	install_hook(&parse_bin_hook, ParseBin, parse_bin_thunk, parse_bin_trampoline);
-	
-	/* Quit game hook. */
-	install_hook(&load_front_data_hook, LoadFrontData, load_front_data_thunk, load_front_data_trampoline);
-
-	/* Save hook. */
-	install_hook(&memcard_make_whole_save_hook, memcard_MakeWholeSave, memcard_make_whole_save_thunk, memcard_make_whole_save_trampoline);
-	install_hook(&memcard_save_hook, memcard_Save, memcard_save_thunk, memcard_save_trampoline);
-	install_hook(&pack_map_mask_hook, PackMapMask, pack_map_mask_thunk, pack_map_mask_trampoline);
-	
-	/* Load hook. */
-	install_hook(&memcard_restore_data_hook, memcard_RestoreData, memcard_restore_data_thunk, memcard_restore_data_trampoline);
-}
 
 void* parse_bin_thunk()
 {
@@ -105,7 +80,6 @@ void* parse_bin_thunk()
 	xor_crypt(&_racdoor_payload, &_racdoor_payload_end, payload_key);
 	
 	install_module_hooks();
-	install_persistence_hooks();
 	
 	return startlevel;
 }

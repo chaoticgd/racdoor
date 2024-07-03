@@ -3,24 +3,13 @@
 #include <racdoor/hook.h>
 #include <racdoor/module.h>
 
-extern int Level;
-
-void FontPrintWrapper1(int x, int y, u32 rgba, const char* s, int length);
 int DrawBoltCount(void* unknown);
+int draw_bolt_count_thunk(void* unknown);
+AUTO_HOOK(DrawBoltCount, draw_bolt_count_thunk, draw_bolt_count_trampoline, int);
 
-FuncHook hook = {};
-TRAMPOLINE(hook_trampoline, int);
-
-int MyDrawBoltCount(void* unknown)
+int draw_bolt_count_thunk(void* unknown)
 {
 	FontPrintRight(200, 100, 0xff00ffff, "Hello, World!", 13);
 	
-	return hook_trampoline(unknown);
+	return draw_bolt_count_trampoline(unknown);
 }
-
-void hello_load(void)
-{
-	install_hook(&hook, DrawBoltCount, MyDrawBoltCount, hook_trampoline);
-}
-
-MODULE_LOAD_FUNC(hello_load);

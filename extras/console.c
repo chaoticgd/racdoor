@@ -16,15 +16,7 @@ static u32 buffer_pos = 0;
 
 void DrawHudElements(void);
 void draw_hud_elements_thunk(void);
-FuncHook draw_hud_elements_hook = {};
-TRAMPOLINE(draw_hud_elements_trampoline, int);
-
-void con_load(void)
-{
-	install_hook(&draw_hud_elements_hook, DrawHudElements, draw_hud_elements_thunk, draw_hud_elements_trampoline);
-}
-
-MODULE_LOAD_FUNC(con_load);
+AUTO_HOOK(DrawHudElements, draw_hud_elements_thunk, draw_hud_elements_trampoline, void);
 
 void draw_hud_elements_thunk(void)
 {

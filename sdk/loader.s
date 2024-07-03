@@ -74,8 +74,6 @@ loader_run:
 	addiu $a0, $zero, 1
 	jal install_module_hooks
 	nop
-	jal install_persistence_hooks
-	nop
 	jal load_modules
 	nop
 

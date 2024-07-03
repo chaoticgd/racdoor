@@ -220,21 +220,11 @@ static const char* hero_state_strings[] = {
 
 STATIC_ASSERT(ARRAY_SIZE(hero_state_strings) == 156, hero_state_strings_not_contiguous);
 
-FuncHook hero_set_type_hook = {};
-TRAMPOLINE(hero_set_type_trampoline, int);
 int hero_set_type_thunk(char new_type, HERO_STATE_ENUM new_state, int unknown);
+AUTO_HOOK(hero_SetType, hero_set_type_thunk, hero_set_type_trampoline, int);
 
-FuncHook hero_set_state_hook = {};
-TRAMPOLINE(hero_set_state_trampoline, int);
 int hero_set_state_thunk(HERO_STATE_ENUM new_state, int unknown);
-
-void heromonitor_load(void)
-{
-	install_hook(&hero_set_type_hook, hero_SetType, hero_set_type_thunk, hero_set_type_trampoline);
-	install_hook(&hero_set_state_hook, hero_SetState, hero_set_state_thunk, hero_set_state_trampoline);
-}
-
-MODULE_LOAD_FUNC(heromonitor_load);
+AUTO_HOOK(hero_SetState, hero_set_state_thunk, hero_set_state_trampoline, int);
 
 int hero_set_type_thunk(char new_type, HERO_STATE_ENUM new_state, int unknown)
 {

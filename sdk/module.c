@@ -1,9 +1,7 @@
 #include <game/bmain.h>
 
-#include <racdoor/module.h>
-
-#include <racdoor/persistence.h>
 #include <racdoor/hook.h>
+#include <racdoor/module.h>
 
 static CallHook load_hook = {};
 static CallHook update_hook = {};

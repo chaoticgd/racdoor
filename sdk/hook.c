@@ -1,9 +1,13 @@
 #include <racdoor/hook.h>
 
 #include <racdoor/mips.h>
+#include <racdoor/module.h>
 
 static FuncHook* hook_head;
 static CallHook* call_hook_head;
+
+extern FuncHook _racdoor_autohooks;
+extern FuncHook _racdoor_autohooks_end;
 
 void FlushCache(int mode);
 
@@ -84,7 +88,15 @@ void uninstall_call_hook(CallHook* hook)
 	FlushCache(2);
 }
 
-void uninstall_all_hooks()
+void install_auto_hooks(void)
+{
+	for (FuncHook* hook = &_racdoor_autohooks; hook < &_racdoor_autohooks_end; hook++)
+		install_hook(hook, hook->original_func, hook->next, hook->trampoline);
+}
+
+MODULE_LOAD_FUNC(install_auto_hooks);
+
+void uninstall_all_hooks(void)
 {
 	for (FuncHook* hook = hook_head; hook != NULL; hook = hook->next)
 		uninstall_hook(hook);
