@@ -66,6 +66,7 @@ void install_persistence_hooks()
 	install_hook(&pack_map_mask_hook, PackMapMask, pack_map_mask_thunk, pack_map_mask_trampoline);
 	
 	/* Load hook. */
+	install_hook(&memcard_restore_data_hook, memcard_RestoreData, memcard_restore_data_thunk, memcard_restore_data_trampoline);
 }
 
 void* parse_bin_thunk()
