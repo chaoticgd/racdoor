@@ -25,6 +25,10 @@ typedef enum {
 	GAME_MODE_MAX = 18
 } gameMode_t;
 
-gameMode_t gameMode;
+extern gameMode_t gameMode;
+
+extern char HelpVoiceOn;
+extern char HelpTextOn;
+extern int HelpLogPos;
 
 #endif
