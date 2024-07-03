@@ -3,12 +3,18 @@
 
 #include <racdoor/util.h>
 
-/* Military grade encryption algorithm. */
-
 #define DECRYPTOR_ENTRY_OFFSET 5
-#define DECRYPTOR_JUMP_OFFSET 28
+#define DECRYPTOR_KEY_HIGH_OFFSET 14
+#define DECRYPTOR_KEY_LOW_OFFSET 15
+#define DECRYPTOR_SIZE 34
 
+/* Encrypt/decrypt a buffer of data. */
 void xor_crypt(u32* begin, u32* end, u32 key);
+
+/* Extract the key from the decryptor. */
+u32 extract_key(u32* decryptor);
+
+/* Generate the MIPS code for the decryptor. */
 void gen_xor_decryptor(u32* dest, u32 payload, u32 payload_end, u32 key, u32 next_stage);
 
 #endif

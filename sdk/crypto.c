@@ -3,6 +3,8 @@
 #include <racdoor/mips.h>
 #include <racdoor/util.h>
 
+/* Military grade encryption algorithm. */
+
 void xor_crypt(u32* begin, u32* end, u32 key)
 {
 	for (u32* ptr = begin; ptr < end; ptr++)
@@ -13,6 +15,13 @@ void xor_crypt(u32* begin, u32* end, u32 key)
 		*ptr ^= key;
 	}
 }
+
+u32 extract_key(u32* decryptor)
+{
+	return ((decryptor[DECRYPTOR_KEY_HIGH_OFFSET] & 0xffff) << 16) | (decryptor[DECRYPTOR_KEY_LOW_OFFSET] & 0xffff);
+}
+
+#ifdef _HOST
 
 void gen_xor_decryptor(u32* dest, u32 payload, u32 payload_end, u32 entry, u32 key)
 {
@@ -25,7 +34,7 @@ void gen_xor_decryptor(u32* dest, u32 payload, u32 payload_end, u32 entry, u32 k
 	*ptr++ = MIPS_NOP();
 	*ptr++ = MIPS_NOP();
 	
-	HOST_CHECK(ptr - dest == DECRYPTOR_ENTRY_OFFSET, "Decryptor code out of sync with DECRYPTOR_ENTRY_OFFSET.\n");
+	CHECK(ptr - dest == DECRYPTOR_ENTRY_OFFSET, "Decryptor code out of sync with DECRYPTOR_ENTRY_OFFSET.\n");
 	
 	/* Save overwritten registers on the stack. */
 	*ptr++ = MIPS_SQ(MIPS_T0, 0x110 - 0x1c0, MIPS_SP);
@@ -39,9 +48,12 @@ void gen_xor_decryptor(u32* dest, u32 payload, u32 payload_end, u32 entry, u32 k
 	*ptr++ = MIPS_ORI(MIPS_T0, MIPS_T0, payload);
 	*ptr++ = MIPS_LUI(MIPS_T1, payload_end >> 16);
 	*ptr++ = MIPS_ORI(MIPS_T1, MIPS_T1, payload_end);
-	*ptr++ = MIPS_LUI(MIPS_S4, key >> 16);
-	*ptr++ = MIPS_ORI(MIPS_S4, MIPS_S4, key);
-	*ptr++ = MIPS_ADD(MIPS_T2, MIPS_S4, MIPS_ZERO);
+	
+	CHECK(ptr - dest == DECRYPTOR_KEY_HIGH_OFFSET, "Decryptor code out of sync with DECRYPTOR_KEY_HIGH_OFFSET.\n");
+	*ptr++ = MIPS_LUI(MIPS_T2, key >> 16);
+	
+	CHECK(ptr - dest == DECRYPTOR_KEY_LOW_OFFSET, "Decryptor code out of sync with DECRYPTOR_KEY_LOW_OFFSET.\n");
+	*ptr++ = MIPS_ORI(MIPS_T2, MIPS_T2, key);
 	
 	/* Decrypt the payload. */
 	*ptr++ = MIPS_SLL(MIPS_T3, MIPS_T2, 4);
@@ -59,8 +71,6 @@ void gen_xor_decryptor(u32* dest, u32 payload, u32 payload_end, u32 entry, u32 k
 	*ptr++ = MIPS_BNE(MIPS_T0, MIPS_T1, -10);
 	*ptr++ = MIPS_SW(MIPS_T3, -4, MIPS_T0);
 	
-	HOST_CHECK(ptr - dest == DECRYPTOR_JUMP_OFFSET, "Decryptor code out of sync with DECRYPTOR_JUMP_OFFSET.\n");
-	
 	/* Jump to the loader. */
 	*ptr++ = MIPS_J(entry);
 	*ptr++ = MIPS_NOP();
@@ -71,4 +81,8 @@ void gen_xor_decryptor(u32* dest, u32 payload, u32 payload_end, u32 entry, u32 k
 	*ptr++ = MIPS_NOP();
 	*ptr++ = MIPS_NOP();
 	*ptr++ = MIPS_NOP();
+	
+	CHECK(ptr - dest == DECRYPTOR_SIZE, "Decryptor code out of sync with DECRYPTOR_SIZE.\n");
 }
+
+#endif

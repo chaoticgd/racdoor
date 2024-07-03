@@ -9,6 +9,8 @@
 #include <racdoor/mips.h>
 #include <racdoor/module.h>
 
+#include <string.h>
+
 void* ParseBin();
 void* parse_bin_thunk();
 AUTO_HOOK(ParseBin, parse_bin_thunk, parse_bin_trampoline, void*);
@@ -39,8 +41,7 @@ extern u32 _racdoor_decryptor;
 extern u32 _racdoor_payload;
 extern u32 _racdoor_payload_end;
 
-u32 payload_key = 0; /* Filled in by the loader. */
-u32 payload_entry = 0; /* Filled in by the disarm function. */
+u32 decryptor[DECRYPTOR_SIZE] = {};
 
 static char should_uninstall = 0;
 
@@ -53,6 +54,8 @@ void* parse_bin_thunk()
 	if (should_uninstall)
 		return startlevel;
 	
+	u32 payload_key = extract_key(decryptor);
+	
 	/* The payload will have been re-encrypted after it was loaded the last
 	   time, so we need to decrypt it again here. */
 	xor_crypt(&_racdoor_payload, &_racdoor_payload_end, payload_key);
@@ -60,18 +63,17 @@ void* parse_bin_thunk()
 	/* FastDecompress buffers compressed data into the scratchpad using DMA. */
 	FlushCache(0);
 	
-	/* The unpack call below will reset these variables, so we need to make a
-	   backup of them here. */
-	u32 payload_key_backup = payload_key;
-	u32 payload_entry_backup = payload_entry;
+	/* The unpack call will reset all the global variables, so we need to make
+	   a backup of the decryptor here.. */
+	u32 decryptor_backup[DECRYPTOR_SIZE];
+	memcpy(decryptor_backup, decryptor, sizeof(decryptor));
 	
 	/* Unpack all the sections into memory once more, so that we can apply fresh
 	   relocations for the new level to them. */
 	unpack();
 	
-	/* Restore the key and entry point. */
-	payload_key = payload_key_backup;
-	payload_entry = payload_entry_backup;
+	/* Restore the decryptor. */
+	memcpy(decryptor, decryptor_backup, sizeof(decryptor));
 	
 	/* Apply the relocations for the new level. */
 	apply_relocations();
@@ -127,8 +129,6 @@ int memcard_save_thunk(int force, int level)
 
 void prepare_save()
 {
-	gen_xor_decryptor(&_racdoor_decryptor, (u32) &_racdoor_payload, (u32) &_racdoor_payload_end, payload_entry, payload_key);
-	
 	/* Gather together a bunch of variables that are needed to setup the initial
 	   hook. This is all explained in the arm function itself. */
 	ExploitParams params;
@@ -157,6 +157,9 @@ void prepare_save()
 	
 	/* Setup the initial hook. */
 	arm(&params);
+	
+	/* Copy the decryptor into place again. */
+	memcpy(&_racdoor_decryptor, decryptor, DECRYPTOR_SIZE * 4);
 }
 
 void pack_map_mask_thunk()
