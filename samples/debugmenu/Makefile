@@ -4,7 +4,7 @@ BIN = debugmenu
 SRCS = debugmenu.c
 LIBS = $(RACDOOR)/sdk/sdk.$(TARGET).a
 
-SERIALS = SCES-50916
+SERIALS = SCES-50916 SCUS-97199
 
 host:
 ee: debugmenu

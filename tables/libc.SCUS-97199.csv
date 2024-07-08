@@ -1,0 +1,6 @@
+NAME,TYPE,COMMENT,SIZE,CORE,FRONTEND,FRONTBIN,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18
+memcpy,FUNC,,,00115248,,,,,,,,,,,,,,,,,,,,,
+memmove,FUNC,,,001152f8,,,,,,,,,,,,,,,,,,,,,
+memset,FUNC,,,001153fc,,,,,,,,,,,,,,,,,,,,,
+strlen,FUNC,,,001166cc,,,,,,,,,,,,,,,,,,,,,
+vsprintf,FUNC,,,00116da8,,,,,,,,,,,,,,,,,,,,,
