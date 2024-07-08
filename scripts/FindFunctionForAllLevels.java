@@ -43,23 +43,18 @@ public class FindFunctionForAllLevels extends GhidraScript {
 	public void run() throws Exception {
 		fid = new FidService();
 		
+		String csvSymbol = this.askString("Enter CSV Symbol", "Line:");
+		if(csvSymbol.charAt(csvSymbol.length() - 1) == ' ') {
+			csvSymbol = csvSymbol.substring(0, csvSymbol.length() - 1);
+		}
+		
 		String csvHeader = this.askString("Enter CSV Header", "Line:");
 		if(csvHeader.charAt(csvHeader.length() - 1) == ' ') {
 			csvHeader = csvHeader.substring(0, csvHeader.length() - 1);
 		}
 		
 		ArrayList<Column> columns = parseHeader(csvHeader);
-
-		String csvSymbol = this.askString("Enter CSV Symbol", "Line:");
-		if(csvSymbol.charAt(csvSymbol.length() - 1) == ' ') {
-			csvSymbol = csvSymbol.substring(0, csvSymbol.length() - 1);
-		}
-		
 		parseSymbol(columns, csvSymbol);
-		
-		//for (Column col : columns) {
-		//	println(col.heading + ": " + Integer.toString(col.level) + " " + col.value);
-		//}
 		
 		FidHashQuad targetHash = getTargetFidHash(columns);
 		if (targetHash == null) {
@@ -68,25 +63,14 @@ public class FindFunctionForAllLevels extends GhidraScript {
 		
 		println("Target Hash: " + targetHash.toString());
 		
-		findFunctions(columns, targetHash);
+		findFunctions(targetHash, columns);
 		printSymbol(columns);
 	}
 	
 	FidHashQuad getTargetFidHash(ArrayList<Column> columns) throws Exception {
 		for (MemoryBlock block : currentProgram.getMemory().getBlocks()) {
-			if (!block.getName().startsWith("lvl") || block.getName().charAt(3) == '.') {
-				continue;
-			}
-			
-			int level = parseInt(block.getName(), 3);
-			
-			Column column = null;
-			for (Column col : columns) {
-				if (col.level == level && !col.value.isEmpty()) {
-					column = col;
-				}
-			}
-			if (column == null) {
+			Column column = columnFromMemoryBlock(block, columns);
+			if (column == null || column.value.isEmpty()) {
 				continue;
 			}
 			
@@ -102,22 +86,9 @@ public class FindFunctionForAllLevels extends GhidraScript {
 		return null;
 	}
 	
-	void findFunctions(ArrayList<Column> columns, FidHashQuad targetHash) throws Exception {
+	void findFunctions(FidHashQuad targetHash, ArrayList<Column> columns) throws Exception {
 		for (MemoryBlock block : currentProgram.getMemory().getBlocks()) {
-			if (!block.getName().startsWith("lvl") || block.getName().charAt(3) == '.') {
-				continue;
-			}
-			
-			int level = parseInt(block.getName(), 3);
-			
-			Column column = null;
-			for (Column col : columns) {
-				if (col.isOverlay && col.level == level) {
-					column = col;
-					break;
-				}
-			}
-			
+			Column column = columnFromMemoryBlock(block, columns);
 			if (column == null) {
 				continue;
 			}
@@ -145,8 +116,32 @@ public class FindFunctionForAllLevels extends GhidraScript {
 		}
 	}
 	
+	Column columnFromMemoryBlock(MemoryBlock block, ArrayList<Column> columns) {
+		if (block.getName().startsWith("frontend")) {
+			for (Column column : columns) {
+				if (column.heading.equals("FRONTEND")) {
+					return column;
+				}
+			}
+		} else if (block.getName().startsWith("frontbin")) {
+			for (Column column : columns) {
+				if (column.heading.equals("FRONTBIN")) {
+					return column;
+				}
+			}
+		} else if (block.getName().startsWith("lvl") && block.getName().charAt(3) != '.') {
+			int level = parseInt(block.getName(), 3);
+			for (Column column : columns) {
+				if (column.isOverlay && column.level == level) {
+					return column;
+				}
+			}
+		}
+		return null;
+	}
+	
 	void printSymbol(ArrayList<Column> columns) throws Exception {
-		println("\n\nSINGLE:\n\n");
+		println("\n\nSINGLE:\n");
 		for (int i = 0; i < columns.size(); i++) {
 			Column column = columns.get(i);
 			print(column.value);
