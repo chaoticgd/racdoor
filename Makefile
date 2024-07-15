@@ -19,6 +19,10 @@ ee: $(EE_SUBDIRS)
 $(EE_SUBDIRS): host
 	TARGET=ee $(MAKE) -C $(patsubst ee-%,%,$@) ee
 
+.PHONY: doc
+doc:
+	$(MAKE) -C doc
+
 # Run 'make clean' on each subdirectory in order.
 CLEAN_SUBDIRS = $(addprefix clean-,$(SUBDIRS))
 .PHONY: clean $(CLEAN_SUBDIRS)

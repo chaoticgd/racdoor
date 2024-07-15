@@ -6,14 +6,18 @@
 
 # Ignore specific file types.
 *.a
+*.aux
 *.d
 *.dis
 *.elf
+*.log
 *.map
 *.o
+*.pdf
 *.rdx
 *.secret
 *.tbl
+*.toc
 
 # Ignore specific directories.
 /tables/output

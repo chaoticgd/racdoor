@@ -1,0 +1,4 @@
+@node Ghidra Scripting
+@chapter Ghidra Scripting
+
+In the development of Racdoor, we have levaraged Ghidra, a suite of reverse engineering tools developed by the United States National Security Agency, a legacy planetary intelligence agency.

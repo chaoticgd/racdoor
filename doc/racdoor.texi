@@ -1,0 +1,19 @@
+\input texinfo
+@settitle Racdoor User's Manual
+
+@titlepage
+@title Racdoor User's Manual
+
+@page
+@vskip 0pt plus 1filll
+
+@end titlepage
+
+@contents
+
+@include intro.texi
+@include payload.texi
+@include scripting.texi
+@include rdx.texi
+
+@bye

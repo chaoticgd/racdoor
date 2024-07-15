@@ -1,0 +1,76 @@
+@node RDX Object File Format
+@chapter RDX Object File Format
+
+@section Container Format
+
+RDX object files exist in two forms. The first exists before the RDX file has
+been packed into a save game and consists of a standard ELF object file. The
+second is the representation used for RDX files that have been packed, and
+consists of a custom file format designed with space efficiency in mind.
+
+@subsection Payload Header
+
+@table @code
+
+@item copy_count
+The number of copied sections.
+
+@item fill_count
+The number of filled sections e.g. @code{.bss}.
+
+@item decompress_count
+The number of compressed sections.
+
+@item postload
+Flag used at runtime to determine how the unpack routine was entered.
+
+@end table
+
+@section Sections
+
+@table @code
+
+@item .racdoor.dummy
+Dummy section used for symbols relating to a function or global variable from
+the game, rather than from the RDX implant itself. This section must have an
+address of zero.
+
+@item .racdoor.loader
+MIPS code for the loader. This section cannot be compressed.
+
+@item .racdoor.modules
+Arrays of function pointers that are to be used to service load, unload and
+update events.
+
+@item .racdoor.levelmap
+A mapping from level numbers to overlay indices. This is used by both the loader
+and the linker, and hence cannot be compressed.
+
+@item .racdoor.addrtbl
+Tables of addresses, used to link against functions and global variables from
+the game. The first 4 bytes of the section are used to store the number of
+addresses per level.
+
+@item .racdoor.fastdecompress
+The addresses of the @code{FastDecompress} function for each level overlay. Used by the
+loader, and treated specially by the save game packer.
+
+@item .racdoor.relocs
+Relocations to be applied dynamically at runtime i.e. those that are used to
+locate objects that exist within the level overlays. These use absolute
+addresses instead of being relative to a specific section. Additionally, the
+indices provided index into the tables in the @code{.racdoor.addrtbl} section
+rather than a traditional symbol table.
+
+@item .racdoor.symbolmap
+Maps from symbol names to the runtime indices used for accessing addresses from
+the @code{.racdoor.addrtbl} section. Not included at runtime.
+
+@item .racdoor.serial
+The product code of the release of the game which the implant is targetting,
+stored as a null-terminated ASCII string. For example, @code{SCUS-97199} would 
+be used to specify that the implant targets the NTSC release of Ratchet & Clank.
+
+@end table
+
+@section Symbols
