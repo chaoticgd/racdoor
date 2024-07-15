@@ -5,7 +5,7 @@
 
 #ifdef _EE
 
-extern u8 _racdoor_levelmap;
+extern u8 _racdoor_overlaymap;
 extern u32 _racdoor_addrtbl;
 extern RacdoorRelocation _racdoor_relocs;
 extern RacdoorRelocation _racdoor_relocs_end;
@@ -19,7 +19,7 @@ void apply_relocations()
 	/* The addresses we want to apply will change depending on which level
 	   overlay is currently loaded, so we calculate which address table we want
 	   to use here. */
-	u8 overlay_index = (&_racdoor_levelmap)[Level];
+	u8 overlay_index = (&_racdoor_overlaymap)[Level];
 	u32 symbol_count = _racdoor_addrtbl;
 	u32* table = &_racdoor_addrtbl + 1 + overlay_index * symbol_count;
 	

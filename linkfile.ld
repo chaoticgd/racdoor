@@ -103,10 +103,10 @@ SECTIONS
 	
 	/* Level to overlay index mapping table. Cannot be compressed since it is
 	   used by the loader. */
-	.racdoor.levelmap :
+	.racdoor.overlaymap :
 	{
-		_racdoor_levelmap = .;
-		*(.racdoor.levelmap)
+		_racdoor_overlaymap = .;
+		*(.racdoor.overlaymap)
 	}
 	
 	/* Runtime address table used for performing relocation. */

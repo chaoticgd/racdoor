@@ -170,8 +170,8 @@ unpack_decompress_start:
 # decompression function from an array that was just copied from the payload.
 	lui $t0, %hi(Level)
 	lw $t0, %lo(Level)($t0)
-	lui $t1, %hi(_racdoor_levelmap)
-	addiu $t1, %lo(_racdoor_levelmap)
+	lui $t1, %hi(_racdoor_overlaymap)
+	addiu $t1, %lo(_racdoor_overlaymap)
 	add $t0, $t1, $t0
 	lbu $t1, 0x0($t0) # Load overlay index.
 	lui $t0, %hi(_racdoor_fastdecompress)

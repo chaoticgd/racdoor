@@ -626,7 +626,7 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const 
 	static const char* section_names[] = {
 		"",
 		".racdoor.dummy",
-		".racdoor.levelmap",
+		".racdoor.overlaymap",
 		".racdoor.addrtbl",
 		".racdoor.fastdecompress",
 		".racdoor.relocs",
@@ -639,7 +639,7 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const 
 	
 	/* Determine the layout of the object file that is to be written out. */
 	u32 file_header_size = sizeof(ElfFileHeader);
-	u32 levelmap_size = table->level_count;
+	u32 overlaymap_size = table->level_count;
 	u32 addrtbl_size = 4 + dynamic_symbol_count * table->overlay_count * 4;
 	u32 fastdecompress_size = table->level_count * 4;
 	u32 relocs_size = relocation_count * sizeof(RacdoorRelocation);
@@ -662,8 +662,8 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const 
 			strtab_size += strlen(table->symbols[i].name) + 1;
 	
 	u32 file_header_offset = 0;
-	u32 levelmap_offset = file_header_offset + file_header_size;
-	u32 addrtbl_offset = levelmap_offset + levelmap_size;
+	u32 overlaymap_offset = file_header_offset + file_header_size;
+	u32 addrtbl_offset = overlaymap_offset + overlaymap_size;
 	u32 fastdecompress_offset = addrtbl_offset + addrtbl_size;
 	u32 relocs_offset = fastdecompress_offset + fastdecompress_size;
 	u32 symbolmap_head_offset = relocs_offset + relocs_size;
@@ -698,9 +698,9 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const 
 	header->shstrndx = find_string(".shstrtab", section_names, ARRAY_SIZE(section_names));
 	
 	/* Fill in the level to overlay mapping table. */
-	u8* levelmap = (u8*) &buffer.data[levelmap_offset];
+	u8* overlaymap = (u8*) &buffer.data[overlaymap_offset];
 	for (u32 i = 0; i < table->level_count; i++)
-		levelmap[i] = table->levels[i];
+		overlaymap[i] = table->levels[i];
 	
 	/* Fill in the runtime linking table. */
 	u32* addrtbl = (u32*) &buffer.data[addrtbl_offset];
@@ -773,10 +773,10 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const 
 			.size = 0,
 			.addralign = 1
 		},
-		/* .racdoor.levelmap */ {
+		/* .racdoor.overlaymap */ {
 			.type = SHT_PROGBITS,
-			.offset = levelmap_offset,
-			.size = levelmap_size,
+			.offset = overlaymap_offset,
+			.size = overlaymap_size,
 			.addralign = 1
 		},
 		/* .racdoor.addrtbl */ {

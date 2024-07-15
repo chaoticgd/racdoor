@@ -42,7 +42,7 @@ MIPS code for the loader. This section cannot be compressed.
 Arrays of function pointers that are to be used to service load, unload and
 update events.
 
-@item .racdoor.levelmap
+@item .racdoor.overlaymap
 A mapping from level numbers to overlay indices. This is used by both the loader
 and the linker, and hence cannot be compressed.
 
