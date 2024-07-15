@@ -263,17 +263,6 @@ u32 pack_rdx(u8* output, u32 output_size, Buffer rdx, int enable_compression)
 		offset += sizeof(RacdoorLoadHeader);
 	}
 	
-	/* Copy the array of FastDecompress function pointers into the payload. */
-	if (enable_compression)
-	{
-		ElfSectionHeader* fastdecompress_header = lookup_section(rdx, ".racdoor.fastdecompress");
-		u32* fastdecompress_funcs = buffer_get(rdx, fastdecompress_header->offset, fastdecompress_header->size, "FastDecompress pointers");
-		
-		CHECK((u64) offset + fastdecompress_header->size <= output_size, "RDX too big!\n");
-		memcpy(&output[offset], fastdecompress_funcs, fastdecompress_header->size);
-		offset += fastdecompress_header->size;
-	}
-	
 	u32 load_index = 0;
 	u32 entry_point_offset = 0;
 	
