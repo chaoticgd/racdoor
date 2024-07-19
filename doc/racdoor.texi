@@ -7,12 +7,29 @@
 @page
 @vskip 0pt plus 1filll
 
+@sansserif{Unauthorized reproduction or distribution, in whole or in part, of
+this book is expressly permitted by law.}
+
+@cartouche
+
+@sansserif{IMPORTANT NOTICE: This document is not actually top secret. Any
+similarities between the fictional Galactic Security Agency and any US
+government agencies that may or may not exist are purely coincidental. Please do
+not arrest me. Thank you!}
+
+@end cartouche
+
 @end titlepage
+
+@everyheading GSA TOP SECRET @| @| @thistitle
+@everyfooting @| @sansserif{-@thispage-}
 
 @contents
 
-@include intro.texi
+@include overview.texi
 @include payload.texi
+@include tables.texi
+@include exploit.texi
 @include scripting.texi
 @include rdx.texi
 

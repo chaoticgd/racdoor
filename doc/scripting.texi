@@ -1,4 +1,39 @@
-@node Ghidra Scripting
-@chapter Ghidra Scripting
+@node Integration with Legacy Planetary Intelligence Agency Technology
+@chapter Integration with Legacy Planetary Intelligence Agency Technology
 
-In the development of Racdoor, we have levaraged Ghidra, a suite of reverse engineering tools developed by the United States National Security Agency, a legacy planetary intelligence agency.
+Due to a lack of funding, we have made use of Ghidra, a suite of reverse engineering tools developed by the United States National Security Agency, for
+reverse engineering the games and to automate the collection of addresses,
+among other things.
+
+@node FindFunctionForAllLevels
+@section FindFunctionForAllLevels
+
+@node FindFunctionInCurrentProgramByHash
+@section FindFunctionInCurrentProgramByHash
+
+@node FindMemcardBranches
+@section FindMemcardBranches
+
+@node ImportLevelOverlays
+@section ImportLevelOverlays
+
+Imports all the level overlays from a build of the game into a single Ghidra
+file as memory blocks in overlay spaces, and names the @code{startlevel}
+functions as well as functions referenced from the @code{lvl.*vtbl} sections
+appropriately.
+
+Instructions:
+
+@enumerate
+@item Unpack the game using wrench (0.4 or newer, or the latest unstable build).
+@item Import the boot ELF, but don't run auto analysis.
+@item Run the script, select the directory containing the newly unpacked asset
+bank e.g. rac_sces_509_16.
+@item Run auto analysis.
+
+@end enumerate
+
+@node MarkupLvlVtblFunctions
+@section MarkupLvlVtblFunctions
+
+

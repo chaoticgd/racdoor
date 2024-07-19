@@ -1,2 +1,49 @@
 @node Writing a Payload
 @chapter Writing a Payload
+
+@node Lifecycle of an Implant
+@section Lifecycle of an Implant
+
+@noindent
+Setup:
+
+@enumerate
+
+@item An implanted save file is loaded by the game.
+@item A level transition occurs.
+@item The player gains control.
+@item The exploit runs.
+@item The payload is loaded and linked.
+@item The module load functions are called.
+
+@end enumerate
+
+@noindent
+Repeat:
+
+@enumerate 7
+
+@item The module update functions are called on every iteration of the main
+loop.
+@item The main loop in @code{startlevel} stops.
+@item The module unload functions are called.
+@item A level transition occurs.
+@item All hooks are uninstalled.
+@item The @code{ParseBin} function loads the new level overlay.
+@item If the level transition was the result of a save game being loaded, or the
+player choosing to quit to the title screen, no further steps are executed.
+@item The payload is reloaded and linked against the new level.
+@item The module load functions are called.
+@item The player gains control.
+@item Goto @b{Repeat}.
+
+@end enumerate
+
+@node Modules
+@section Modules
+
+@node Hooking
+@section Hooking
+
+Racdoor supports three types of hook: functions entry point hooks, automatic
+function entry point hooks, and function call hooks.

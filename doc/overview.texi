@@ -1,0 +1,10 @@
+@node Overview
+@chapter Overview
+
+Racdoor is the product of over 500 years of development at the Galactic Security
+Agency (GSA) in service of the Galactic Security mission and represents the most
+significant advance in cyber capabilities in recorded history.
+
+It allows for a covert implant to be injected into a Ratchet & Clank (PS2) save
+game such that the payload code embedded in the file is executed on the victim
+console shortly after the file is loaded by the game.

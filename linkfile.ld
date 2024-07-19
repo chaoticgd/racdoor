@@ -85,7 +85,7 @@ SECTIONS
 		*(COMMON)
 	}
 	
-	/* Function pointers used for loading and unloading modules. */
+	/* Function pointers used for loading, updating and unloading modules. */
 	.racdoor.modules :
 	{
 		_racdoor_modloadfuncs = .;
@@ -124,7 +124,7 @@ SECTIONS
 		*(.racdoor.fastdecompress)
 	}
 	
-	/* Runtime relocation table. This is filled in by rdxprep and only contains
+	/* Runtime relocation table. This is filled in by rdxlink and only contains
 	   relocations that are needed for linking against the level overlays. */
 	.racdoor.relocs :
 	{

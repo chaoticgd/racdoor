@@ -1,6 +1,7 @@
 @node RDX Object File Format
 @chapter RDX Object File Format
 
+@node Container Format
 @section Container Format
 
 RDX object files exist in two forms. The first exists before the RDX file has
@@ -8,7 +9,12 @@ been packed into a save game and consists of a standard ELF object file. The
 second is the representation used for RDX files that have been packed, and
 consists of a custom file format designed with space efficiency in mind.
 
+The header information that follows relates to the packed version of the format.
+
+@node Payload Header
 @subsection Payload Header
+
+Appears at the beginning of the payload.
 
 @table @code
 
@@ -26,6 +32,26 @@ Flag used at runtime to determine how the unpack routine was entered.
 
 @end table
 
+@node Load Header
+@subsection Load Header
+
+Appears in an array immediately following the payload header.
+
+@table @code
+
+@item dest
+The destination address to load the section at.
+
+@item source
+The source address to load the section from, or the fill value in the case of
+fill sections.
+
+@item size
+The size in bytes of the final loaded section. Not used for compressed sections.
+
+@end table
+
+@node Sections
 @section Sections
 
 @table @code
@@ -73,4 +99,107 @@ be used to specify that the implant targets the NTSC release of Ratchet & Clank.
 
 @end table
 
+@node Symbols
 @section Symbols
+
+@node Exploit Symbols
+@subsection Exploit Symbols
+
+@table @code
+
+@item _racdoor_max_level
+The maximum legal value of the @code{Level} variable.
+
+@item _racdoor_help_message
+The index of the help message used to trigger the exploit.
+
+@item _racdoor_help_gadget
+The index of the gadget help message required for the exploit to be run.
+
+@item _racdoor_help_log
+The address of the @code{HelpLog} array.
+
+@item _racdoor_initial_hook
+The address of the branch instruction to overwrite in order to provide the
+initial hook for the exploit.
+
+@item _racdoor_return_to_game
+The absolute address of the original target of the instruction pointed to by @code{_racdoor_initial_hook}.
+
+@item _racdoor_original_instruction
+The original value of the instruction pointed to by
+@code{_racdoor_initial_hook}.
+
+@item _racdoor_trampoline
+The address of the save data block containing the trampoline which the initial
+hook points to.
+
+@item _racdoor_trampoline_offset
+The offset of the trampoline in the save data block.
+
+@item _racdoor_trampoline_block
+The ID number of the save data block containing the trampoline.
+
+@item _racdoor_decryptor
+The address of the save game block containing payload decryption code.
+
+@item _racdoor_decryptor_block
+The ID number of the save game block containing the payload decryption code.
+
+@item _racdoor_payload
+The address of the save game block containing the payload.
+
+@item _racdoor_payload_end
+The first address past the end of the save game block containing the payload.
+
+@item _racdoor_payload_block
+The ID number of the save game block containing the payload.
+
+@item _racdoor_modload_hook_ofs
+The offset of the call in the @code{startlevel} function that we hook to run
+the module load functions.
+
+@item _racdoor_modupdate_hook_ofs
+The offset of the call in the @code{startlevel} function that we hook to run
+the module update functions.
+
+@item _racdoor_modunload_hook_ofs
+The offset of the call in the @code{startlevel} function that we hook to run
+the module unload functions.
+
+@end table
+
+@node Linker Script Symbols
+@subsection Linker Script Symbols
+
+@table @code
+
+@item _racdoor_autohooks, _racdoor_autohooks_end
+The array of automatic function hooks.
+
+@item _racdoor_modloadfuncs, _racdoor_modloadfuncs_end
+Array of pointers to module load functions.
+
+@item _racdoor_modupdatefuncs, _racdoor_modupdatefuncs_end
+Array of pointers to module update functions.
+
+@item _racdoor_modunloadfuncs, _racdoor_modunloadfuncs_end
+Array of pointers to module unload functions.
+
+@item _racdoor_overlaymap
+Address of the @code{.racdoor.overlaymap} section used for mapping level numbers
+to overlay indices.
+
+@item _racdoor_addrtbl
+Address of the @code{.racdoor.addrtbl} section used for looking up the addresses
+of functions and global variables in the level overlays.
+
+@item _racdoor_fastdecompress
+Address of the @code{.racdoor.fastdecompress} section used by the loader to find
+the @code{FastDecompress} function.
+
+@item _racdoor_relocs, _racdoor_relocs_end
+Runtime relocation table. This is filled in by @code{rdxlink} and only contains
+relocations that are needed for linking against the level overlays.
+
+@end table
