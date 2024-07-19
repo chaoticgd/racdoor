@@ -1,0 +1,59 @@
+This file documents branches that can have the high byte of their target
+overwritten with a value of 0x50 in the Help_AddToLog function such that the
+modified branch instruction will jump into data loaded from the save game.
+
+The format of this file is as follows:
+
+	FunctionName BranchInstructionAddress -> TargetAddress (SaveBlockNumber + OffsetInBlock)
+
+Function that aren't viable, such as those that don't run every frame or those
+that only include branch instructions with conditions that always evaluate to
+false, are omitted.
+
+snd_FlushSoundCommands 0012dc98 -> 141d58 (16 + 3f0)
+snd_FlushSoundCommands 0012dca8 -> 141d58 (16 + 3f0)
+snd_FlushSoundCommands 0012dcb0 -> 141cd8 (16 + 370)
+snd_FlushSoundCommands 0012dcb8 -> 141ccc (16 + 364)
+snd_FlushSoundCommands 0012dcd0 -> 141d58 (16 + 3f0)
+snd_FlushSoundCommands 0012dcf8 -> 141d58 (16 + 3f0)
+snd_FlushSoundCommands 0012dd24 -> 141d40 (16 + 3d8)
+snd_FlushSoundCommands 0012dd50 -> 142118 (3002 + 258)
+snd_FlushSoundCommands 0012dd5c -> 141db8 (16 + 450)
+snd_FlushSoundCommands 0012dd7c -> 141db4 (16 + 44c)
+snd_FlushSoundCommands 0012dd84 -> 141db0 (16 + 448)
+snd_FlushSoundCommands 0012ddb8 -> 141df4 (16 + 48c)
+snd_FlushSoundCommands 0012ddd8 -> 141df0 (16 + 488)
+snd_FlushSoundCommands 0012dde0 -> 141df4 (16 + 48c)
+snd_FlushSoundCommands 0012ddf4 -> 141e28 (1010 + 20)   no
+snd_FlushSoundCommands 0012de08 -> 141e24 (1010 + 1c)   no
+snd_FlushSoundCommands 0012de14 -> 141e24 (1010 + 1c)   no
+snd_FlushSoundCommands 0012de28 -> 141e3c (1010 + 34)   <-------
+snd_FlushSoundCommands 0012de34 -> 141e44 (1010 + 3c)   <-------
+
+snd_Something 0012de84 -> 141e94 (1010 + 8c)
+snd_Something 0012de8c -> 141eec (3002 + 2c)
+snd_Something 0012de9c -> 141eec (3002 + 2c)
+snd_Something 0012deb4 -> 141ee0 (3002 + 20)
+snd_Something 0012decc -> 141ee0 (3002 + 20)
+snd_Something 0012ded8 -> 141eec (3002 + 2c)
+
+snd_SendIOPCommandNoWait 0012e724 -> 1427bc (3002 + 8fc)
+snd_SendIOPCommandNoWait 0012e730 -> 1427c0 (3002 + 900)
+snd_SendIOPCommandNoWait 0012e738 -> 1427c4 (3002 + 904)
+snd_SendIOPCommandNoWait 0012e740 -> 1427c4 (3002 + 904)
+snd_SendIOPCommandNoWait 0012e758 -> 142778 (3002 + 8b8)
+snd_SendIOPCommandNoWait 0012e784 -> 142b60 (3002 + ca0)
+snd_SendIOPCommandNoWait 0012e7b4 -> 142974 (3002 + ab4)
+snd_SendIOPCommandNoWait 0012e7c4 -> 1427f0 (3002 + 930)
+snd_SendIOPCommandNoWait 0012e814 -> 14288c (3002 + 9cc)
+snd_SendIOPCommandNoWait 0012e824 -> 142834 (3002 + 974)
+snd_SendIOPCommandNoWait 0012e840 -> 14286c (3002 + 9ac)
+snd_SendIOPCommandNoWait 0012e880 -> 142c20 (3002 + d60)
+snd_SendIOPCommandNoWait 0012e894 -> 142c24 (3002 + d64)
+snd_SendIOPCommandNoWait 0012e89c -> 1428b0 (3002 + 9f0)
+snd_SendIOPCommandNoWait 0012e8b0 -> 1428bc (3002 + 9fc)
+snd_SendIOPCommandNoWait 0012e8ec -> 142914 (3002 + a54)
+snd_SendIOPCommandNoWait 0012e90c -> 142cf8 (3002 + e38)
+
+snd_SendCurrentBatch 0012ea28 -> 142a40 (3002 + b80)
+snd_SendCurrentBatch 0012ea4c -> 142e30 (3002 + f70)
