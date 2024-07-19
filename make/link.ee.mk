@@ -1,3 +1,7 @@
+# This file is part of Racdoor.
+# Copyright (c) 2024 chaoticgd. All rights reversed.
+# Released under the BSD-1-Clause license.
+
 TBLS := $(patsubst %,$(BIN).%.tbl,$(basename $(SERIALS)))
 ELFS := $(patsubst %,$(BIN).%.elf,$(basename $(SERIALS)))
 RDXS := $(patsubst %,$(BIN).%.rdx,$(basename $(SERIALS)))
