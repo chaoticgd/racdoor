@@ -27,6 +27,7 @@ doc:
 CLEAN_SUBDIRS = $(addprefix clean-,$(SUBDIRS))
 .PHONY: clean $(CLEAN_SUBDIRS)
 clean: $(CLEAN_SUBDIRS)
+	$(MAKE) -C doc clean
 $(CLEAN_SUBDIRS):
 	TARGET=host $(MAKE) -C $(patsubst clean-%,%,$@) clean
 	TARGET=ee $(MAKE) -C $(patsubst clean-%,%,$@) clean

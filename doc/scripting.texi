@@ -8,17 +8,28 @@ among other things.
 @node FindFunctionForAllLevels
 @section FindFunctionForAllLevels
 
+Finds the addresses of a function in each level overlay, given the address of
+the function in a single level overlay.
+
+This script must be run on a file generated using the
+@code{ImportLevelOverlay.java} script.
+
 @node FindFunctionInCurrentProgramByHash
 @section FindFunctionInCurrentProgramByHash
 
+Finds a function in the current program given its full FID hash.
+
 @node FindMemcardBranches
 @section FindMemcardBranches
+
+Finds relative branch instructions that can be modified to jump into a block of
+data loaded from the memory card.
 
 @node ImportLevelOverlays
 @section ImportLevelOverlays
 
 Imports all the level overlays from a build of the game into a single Ghidra
-file as memory blocks in overlay spaces, and names the @code{startlevel}
+file as memory blocks in overlay spaces, and marks up the @code{startlevel}
 functions as well as functions referenced from the @code{lvl.*vtbl} sections
 appropriately.
 
@@ -36,4 +47,5 @@ bank e.g. rac_sces_509_16.
 @node MarkupLvlVtblFunctions
 @section MarkupLvlVtblFunctions
 
-
+Marks up functions referenced by the @code{lvl.*vtbl} sections in the same way
+the @code{ImportLevelOverlays} script does.

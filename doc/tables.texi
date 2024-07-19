@@ -1,2 +1,42 @@
 @node My Spreadsheet Doesn't Do That
 @chapter My Spreadsheet Doesn't Do That
+
+The Ratchet & Clank PS2 games developed by Insomniac Games are all built using a
+custom overlay system in which the majority of the game's code is relinked
+separately for each level.
+
+Some object files, such as those from third party libraries, are linked into
+the "core" sections, which stay in memory from level to level. Most object
+files, however, are linked into the non-core sections, which are replaced at the
+end of each level transition by the @code{ParseBin} function (which is in a core
+section, just as you would hope).
+
+Most global variables that need to retain their values between levels were
+placed in the @code{gameglobals.cpp} file, which is linked into the core
+sections. This includes the variables associated with all memory card data
+blocks.
+
+This presents a challenge for hackers trying to patch these games since most
+functions and a lot of global variables move around in memory depending on the
+currently loaded level.
+
+Racdoor solves this problem using a custom dynamic linking system. The addresses
+of each function and global variable that need to be referenced by either the
+exploit or the payload are recorded in CSV files, which can be written manually
+or by using scripts. These CSV files are, at build time, merged together using
+@code{csvmerge} and then converted into an object file using @code{tblgen}.
+
+The resultant object file (or "table" file) contains only the symbol that were
+referenced for that particular build. The core symbols are included as standard
+ELF symbols, while the symbols that depend on the current level are put into
+custom sections designed for dynamic linking at runtime.
+
+This table file, along with all the other object files, are partially linked
+into an ELF file using GNU @code{ld}. An additional link step, implemented by
+@code{rdxlink}, is required to apply core relocations.
+
+At runtime, immediately after the payload is unpacked it will be linked using
+the @code{apply_relocations} function. This function will read the level number,
+map it to an overlay index, and use that to index the @code{.racdoor.addrtbl}
+section to obtain a pointer to table of addresses that are to be used for that
+level. It will then apply the runtime relocations using those addresses.

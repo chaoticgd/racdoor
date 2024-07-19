@@ -1,0 +1,62 @@
+@node Build Environment
+@chapter Build Environment
+
+Any supported build environment must have the following packages installed:
+
+@itemize
+
+@item
+Linux-based operating system.
+
+This includes environments such as Windows Subsystem for Linux.
+
+@item
+Modern native toolchain with support for C99 and C++11.
+
+The majority of Racdoor's code is written in C99, however some C++ compression
+code that is taken from the Wrench Modding Toolset is also used.
+
+@item
+PlayStation 2 GCC cross compiler with support for C99 and EABI.
+
+For example, the version of GCC 3.2.3 from the ps2dev 1.2.0 toolchain.
+
+The modern ps2dev compilers will not work since they don't support the required
+ABI and so they will be unable to pass arguments to functions compiled with any
+of the officially licensed PS2 toolchains correctly.
+
+@item
+GNU Make
+
+A standard build automation tool.
+
+@item
+GNU Texinfo
+
+A document preparation tool.
+
+@end itemize
+
+@noindent
+In addition, the following packages are highly recommended for reverse
+engineering and debugging:
+
+@itemize
+
+@item
+Ghidra
+
+A suite of reverse engineering tools developed by the United States National
+Security Agency, a legacy planetary intelligence agency.
+
+@item
+Ghidra Emotion Engine: Reloaded
+
+An extension for Ghidra that adds support for the PlayStation 2.
+
+@item
+PCSX2
+
+A PlayStation 2 simulator and debugger.
+
+@end itemize

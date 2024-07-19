@@ -3,6 +3,7 @@
 
 @titlepage
 @title Racdoor User's Manual
+@author chaoticgd
 
 @page
 @vskip 0pt plus 1filll
@@ -11,22 +12,21 @@
 this book is expressly permitted by law.}
 
 @cartouche
-
 @sansserif{IMPORTANT NOTICE: This document is not actually top secret. Any
 similarities between the fictional Galactic Security Agency and any US
 government agencies that may or may not exist are purely coincidental. Please do
 not arrest me. Thank you!}
-
 @end cartouche
 
 @end titlepage
 
-@everyheading GSA TOP SECRET @| @| @thistitle
-@everyfooting @| @sansserif{-@thispage-}
+@everyheading GSA TOP SECRET @| @| Racdoor User's Manual
+@everyfooting @| -@thispage-
 
 @contents
 
 @include overview.texi
+@include buildenv.texi
 @include payload.texi
 @include tables.texi
 @include exploit.texi
