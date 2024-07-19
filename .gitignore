@@ -1,8 +1,9 @@
-# Ignore all files without an extension except for makefiles.
+# Ignore all files without an extension except for some specific ones.
 *
 !/**/
 !*.*
 !Makefile
+!README
 
 # Ignore specific file types.
 *.a

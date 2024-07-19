@@ -1,0 +1,20 @@
+Racdoor
+=======
+
+An SDK for producing haunted Ratchet & Clank (PS2) save games.
+
+Building
+--------
+
+Only Linux-based build environments with the old homebrew compiler (e.g. ps2dev
+version 1.2.0 with GCC 3.2.3) are supported. GNU Texinfo is required to build
+the documentation.
+
+To build the software:
+
+	$ make
+
+To build the documentation:
+
+	$ make doc
+
