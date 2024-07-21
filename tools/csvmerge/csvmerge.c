@@ -37,7 +37,7 @@ int main(int argc, char** argv)
 	CHECK(input_csvs[0].data[header_size++] == '\n', "Unexpected end of input file '%s'.\n", input_paths[0]);
 	
 	Buffer output_csv = {
-		.data = malloc(max_output_size),
+		.data = checked_malloc(max_output_size),
 		.size = 0
 	};
 	
