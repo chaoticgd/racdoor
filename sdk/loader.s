@@ -6,8 +6,8 @@
 	.set noreorder
 	.set nomacro
 	.section .racdoor.loader
-	.global loader_entry
-loader_entry:
+	.global loader
+loader:
 	addiu $sp, $sp, -0x1c0
 
 # Save the values that would've been in the general purpose registers right
@@ -54,8 +54,8 @@ loader_flush_cache:
 # memory yet, and we don't know the exact address in which the loader will be
 # placed into memory ahead of time.
 loader_unpack:
-	b unpack_initial
-	nop
+	b unpack_first_run
+	lui $s4, 0 # Set unpack exit flag.
 
 loader_continue:
 	jal FlushCache
@@ -117,20 +117,18 @@ loader_return_to_game:
 
 	.global unpack
 unpack:
-	addiu $sp, $sp, -0x50
+	addiu $sp, $sp, -0x60
 	sq $s0, 0x0($sp)
 	sq $s1, 0x10($sp)
 	sq $s2, 0x20($sp)
 	sq $s3, 0x30($sp)
-	sq $ra, 0x40($sp)
+	sq $s4, 0x40($sp)
+	sq $ra, 0x50($sp)
 	
 unpack_set_exit_flag:
-	lui $s0, %hi(_racdoor_payload)
-	addiu $s0, $s0, %lo(_racdoor_payload)
-	addiu $s1, $zero, 1
-	sb $s1, 0x3($s0)
+	lui $s4, 1
 	
-unpack_initial:
+unpack_first_run:
 	lui $s0, %hi(_racdoor_payload)
 	addiu $s0, $s0, %lo(_racdoor_payload)
 	addiu $s1, $s0, 4
@@ -197,18 +195,15 @@ unpack_decompress_loop:
 # Either jump back to the loader explicitly or return if unpack was called from
 # the persistence code.
 unpack_finish:
-	lbu $s1, 0x3($s0)
-	beq $s1, $zero, loader_continue
+	beq $s4, $zero, loader_continue
 	nop
-
-unpack_reset_exit_flag:
-	sb $zero, 0x3($s0)
 
 unpack_return:
 	lq $s0, 0x0($sp)
 	lq $s1, 0x10($sp)
 	lq $s2, 0x20($sp)
 	lq $s3, 0x30($sp)
-	lq $ra, 0x40($sp)
+	lq $s4, 0x40($sp)
+	lq $ra, 0x50($sp)
 	jr $ra
-	addiu $sp, $sp, 0x50
+	addiu $sp, $sp, 0x60

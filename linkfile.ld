@@ -1,4 +1,4 @@
-ENTRY(loader_entry);
+ENTRY(loader);
 
 PHDRS
 {

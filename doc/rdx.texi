@@ -27,8 +27,8 @@ The number of filled sections e.g. @code{.bss}.
 @item decompress_count
 The number of compressed sections.
 
-@item postload
-Flag used at runtime to determine how the unpack routine was entered.
+@item unused
+Unused.
 
 @end table
 

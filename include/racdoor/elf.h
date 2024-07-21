@@ -138,7 +138,7 @@ typedef struct {
 	u8 copy_count;
 	u8 fill_count;
 	u8 decompress_count;
-	u8 postload;
+	u8 unused;
 	RacdoorLoadHeader loads[];
 } RacdoorPayloadHeader;
 
