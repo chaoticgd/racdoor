@@ -130,6 +130,5 @@ SECTIONS
 	{
 		_racdoor_relocs = .;
 		*(.racdoor.relocs)
-		_racdoor_relocs_end = .;
 	}
 }

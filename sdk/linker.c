@@ -12,7 +12,6 @@
 extern u8 _racdoor_overlaymap;
 extern u32 _racdoor_addrtbl;
 extern RacdoorRelocation _racdoor_relocs;
-extern RacdoorRelocation _racdoor_relocs_end;
 
 extern int Level;
 
@@ -27,7 +26,7 @@ void apply_relocations()
 	u32 symbol_count = _racdoor_addrtbl;
 	u32* table = &_racdoor_addrtbl + 1 + overlay_index * symbol_count;
 	
-	for (RacdoorRelocation* reloc = &_racdoor_relocs; reloc < &_racdoor_relocs_end; reloc++)
+	for (RacdoorRelocation* reloc = &_racdoor_relocs; reloc->address != 0xffffffff; reloc++)
 	{
 		u32 type = reloc->info & 0xff;
 		u32 index = reloc->info >> 8;

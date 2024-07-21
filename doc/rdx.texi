@@ -198,7 +198,7 @@ of functions and global variables in the level overlays.
 Address of the @code{.racdoor.fastdecompress} section used by the loader to find
 the @code{FastDecompress} function.
 
-@item _racdoor_relocs, _racdoor_relocs_end
+@item _racdoor_relocs
 Runtime relocation table. This is filled in by @code{rdxlink} and only contains
 relocations that are needed for linking against the level overlays.
 

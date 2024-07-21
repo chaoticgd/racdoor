@@ -646,7 +646,7 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const 
 	u32 overlaymap_size = table->level_count;
 	u32 addrtbl_size = 4 + dynamic_symbol_count * table->overlay_count * 4;
 	u32 fastdecompress_size = table->level_count * 4;
-	u32 relocs_size = relocation_count * sizeof(RacdoorRelocation);
+	u32 relocs_size = (relocation_count + 1) * sizeof(RacdoorRelocation);
 	u32 symbolmap_head_size = sizeof(RacdoorSymbolMapHead) + dynamic_symbol_count * sizeof(RacdoorSymbolMapEntry);
 	u32 symbolmap_data_size = 0;
 	for (u32 i = 0; i < table->symbol_count; i++)

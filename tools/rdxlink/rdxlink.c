@@ -185,5 +185,9 @@ void process_relocations(ElfSections* sections)
 		}
 	}
 	
-	sections->racdoor_relocs.header->size = dynamic_relocation_count * sizeof(RacdoorRelocation);
+	CHECK(reloc_out < reloc_end, "Not enough space for relocations.\n");
+	reloc_out->address = 0xffffffff;
+	reloc_out->info = 0;
+	
+	sections->racdoor_relocs.header->size = dynamic_relocation_count * sizeof(RacdoorRelocation) + 4;
 }
