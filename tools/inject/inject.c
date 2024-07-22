@@ -225,7 +225,7 @@ u32 pack_rdx(u8* output, u32 output_size, Buffer rdx, int enable_compression)
 		{
 			static const char* uncompressable_sections[] = {
 				".racdoor.loader", /* The loader can't be compressed. */
-				".racdoor.levelmap", /* This section is used by the loader. */
+				".racdoor.overlaymap", /* This section is used by the loader. */
 				".racdoor.fastdecompress" /* This section is used by the loader. */
 			};
 			
