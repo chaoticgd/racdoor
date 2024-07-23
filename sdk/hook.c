@@ -7,7 +7,7 @@
 #include <racdoor/mips.h>
 #include <racdoor/module.h>
 
-/* A function hook that also acts as a trampoline  */
+/* A trampoline for a function entry point hook. */
 typedef union {
 	/* A trampoline template for a hook that hasn't been installed yet. */
 	struct {
