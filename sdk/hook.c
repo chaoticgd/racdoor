@@ -42,7 +42,7 @@ void install_hook(void* trampoline, void* original_func, void* replacement_func)
 	
 	/* Prime the trampoline. */
 	hook->trampoline.first_original_insn = original_insns[0];
-	hook->trampoline.jump_original_func = MIPS_J(&original_insns[2]);
+	hook->trampoline.jump_original_func = MIPS_J(original_insns + 2);
 	hook->trampoline.second_original_insn = original_insns[1];
 	
 	/* Install the hook. */
@@ -56,7 +56,7 @@ void install_hook(void* trampoline, void* original_func, void* replacement_func)
 void uninstall_hook(void* trampoline)
 {
 	FuncHook* hook = trampoline;
-	u32* original_func = MIPS_GET_TARGET(hook->trampoline.jump_original_func);
+	u32* original_func = ((u32*) MIPS_GET_TARGET(hook->trampoline.jump_original_func)) - 2;
 	
 	/* Restore the original instructions. */
 	original_func[0] = hook->trampoline.first_original_insn;
