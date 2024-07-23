@@ -7,62 +7,72 @@
 
 #include <racdoor/util.h>
 
-/* A function entry point hook. */
-typedef struct _FuncHook {
-	struct _FuncHook* prev;
-	struct _FuncHook* next;
-	u32* original_func;
-	u32* trampoline;
-} FuncHook;
-
-/* Macro for generating trampolines that are to be used to call the original
-   hooked functions from within the replacements. */
-#define TRAMPOLINE(name, returntype) \
-	returntype name(); \
+/* Generate a template for the trampoline of a function hook that is to be
+   installed and uninstalled manually. */
+#define FUNC_HOOK(trampoline, returntype) \
+	returntype trampoline(); \
 	__asm__ \
 	( \
 		".pushsection .text\n" \
-		".global " #name "\n" \
-		#name ":\n" \
-		"teq $zero, $zero\n" /* First original instruction. */ \
-		"teq $zero, $zero\n" /* Jump to the original function. */ \
-		"teq $zero, $zero\n" /* Second original instruction. */ \
+		".global " #trampoline "\n" \
+		#trampoline ":\n" \
+		"# Make sure we crash if we jump into an unprimed trampoline.\n" \
+		"teq $zero, $zero\n" \
+		"teq $zero, $zero\n" \
+		"teq $zero, $zero\n" \
 		".popsection\n" \
 	);
 
 /* Patch the start of the original function with a jump instruction pointing
    to the replacement function. */
-void install_hook(FuncHook* hook, void* original_func, void* replacement_func, void* trampoline);
+void install_hook(void* trampoline, void* original_func, void* replacement_func);
 
 /* Restore the start of the original function with the instructions that were
    present before it was hooked. */
-void uninstall_hook(FuncHook* hook);
+void uninstall_hook(void* trampoline);
 
-/* A function call hook. */
-typedef struct _CallHook {
-	struct _CallHook* prev;
-	struct _CallHook* next;
-	u32* instruction;
-	void* original_func;
-} CallHook;
-
-/* Patch a function call to change its target. */
-void install_call_hook(CallHook* hook, void* instruction, void* replacement_func);
-
-/* Restore the function call to its original target. */
-void uninstall_call_hook(CallHook* hook);
-
-/* Automatic hook installation macro. */
-#define AUTO_HOOK(original_func, thunk, trampoline, returntype) \
-	TRAMPOLINE(trampoline, returntype); \
-	FuncHook original_func##_hook __attribute__ ((section (".racdoor.autohooks"))) = { \
-		NULL, (FuncHook*) thunk, (u32*) original_func, (u32*) trampoline \
-	};
+/* Generate a template for the trampoline of a function hook that is to be
+   installed and uninstalled automatically. */
+#define AUTO_HOOK(original_func, replacement_func, trampoline, returntype) \
+	returntype trampoline(); \
+	__asm__ \
+	( \
+		"# These will end up inside .text in an array.\n" \
+		".pushsection .racdoor.autohooks\n" \
+		"# Backup the current reorder setting.\n" \
+		".set push\n" \
+		"# Prevent delay slots from being generated for the jumps.\n" \
+		".set noreorder\n" \
+		".global " #trampoline "\n" \
+		#trampoline ":\n" \
+		"# Make sure we crash if we jump into an unprimed trampoline.\n" \
+		"teq $zero, $zero\n" \
+		"# Data to be passed to install_hook. Due to EE hardware errata, we\n" \
+		"# encode this data as a pair of jump instructions to avoid bad opcodes.\n" \
+		"j " #original_func "\n" \
+		"j " #replacement_func "\n" \
+		"# Restore the previous section.\n" \
+		".popsection\n" \
+		"# Restore the previous noreorder setting.\n" \
+		".set pop\n" \
+	);
 
 /* Install hooks defined using the AUTO_HOOK macro. */
 void install_auto_hooks(void);
 
 /* Restore all functions that have been hooked. */
-void uninstall_all_hooks(void);
+void uninstall_auto_hooks(void);
+
+/* A function call hook. */
+typedef struct _CallHook {
+	u32* call_insn;
+	void* original_func;
+} CallHook;
+
+/* Patch a function call to change its target. */
+void install_call_hook(CallHook* hook, void* call_insn, void* replacement_func);
+
+/* Restore the function call to its original target. */
+void uninstall_call_hook(CallHook* hook);
 
 #endif

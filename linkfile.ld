@@ -38,6 +38,12 @@ SECTIONS
 		*(.text.*)
 		*(.gnu.linkonce.t*)
 		
+		/* Function hooks that are installed automatically. */
+		. = ALIGN(8);
+		_racdoor_autohooks = .;
+		*(.racdoor.autohooks)
+		_racdoor_autohooks_end = .;
+		
 		/* EE hardware errata: Prevent code and data from being too close. */
 		. += 0x14;
 	}
@@ -47,12 +53,6 @@ SECTIONS
 		*(.data)
 		*(.data.*)
 		*(.gnu.linkonce.d*)
-		
-		/* Function hooks that are installed automatically. */
-		. = ALIGN(8);
-		_racdoor_autohooks = .;
-		*(.racdoor.autohooks)
-		_racdoor_autohooks_end = .;
 	}
 	
 	.rodata ALIGN(128) :

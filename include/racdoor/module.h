@@ -20,6 +20,7 @@ typedef struct {
 	void (*_modunloadfunc_##func)(void) __attribute__ ((section (".racdoor.modunloadfuncs"))) = func;
 
 void install_module_hooks();
+void uninstall_module_hooks();
 
 void load_modules();
 void update_modules();

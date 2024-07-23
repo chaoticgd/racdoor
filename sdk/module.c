@@ -41,6 +41,13 @@ void install_module_hooks()
 	install_call_hook(&unload_hook, (char*) startlevel + (u32) &_racdoor_modunload_hook_ofs, unload_thunk);
 }
 
+void uninstall_module_hooks()
+{
+	uninstall_call_hook(&load_hook);
+	uninstall_call_hook(&update_hook);
+	uninstall_call_hook(&unload_hook);
+}
+
 static void load_thunk()
 {
 	load_modules();

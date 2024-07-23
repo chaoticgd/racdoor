@@ -15,12 +15,8 @@
 
 #include <string.h>
 
-void* ParseBin();
-void* parse_bin_thunk();
-AUTO_HOOK(ParseBin, parse_bin_thunk, parse_bin_trampoline, void*);
-
-int LoadFrontData();
-int load_front_data_thunk();
+int LoadFrontData(void);
+int load_front_data_thunk(void);
 AUTO_HOOK(LoadFrontData, load_front_data_thunk, load_front_data_trampoline, int);
 
 int memcard_restore_data_thunk(char* addr, int index, mc_data* mcd);
@@ -32,9 +28,9 @@ AUTO_HOOK(memcard_MakeWholeSave, memcard_make_whole_save_thunk, memcard_make_who
 int memcard_save_thunk(int force, int level);
 AUTO_HOOK(memcard_Save, memcard_save_thunk, memcard_save_trampoline, int);
 
-void prepare_save();
+void prepare_save(void);
 
-void pack_map_mask_thunk();
+void pack_map_mask_thunk(void);
 AUTO_HOOK(PackMapMask, pack_map_mask_thunk, pack_map_mask_trampoline, void);
 
 extern void FlushCache(int mode);
@@ -49,9 +45,20 @@ u32 decryptor[DECRYPTOR_SIZE] = {};
 
 static char should_uninstall = 0;
 
-void* parse_bin_thunk()
+void* ParseBin(void);
+void* parse_bin_thunk(void);
+FUNC_HOOK(parse_bin_trampoline, void*);
+
+void install_persistence_hook(void)
 {
-	uninstall_all_hooks();
+	install_hook(parse_bin_trampoline, ParseBin, parse_bin_thunk);
+}
+
+MODULE_LOAD_FUNC(install_persistence_hook);
+
+void* parse_bin_thunk(void)
+{
+	uninstall_hook(parse_bin_trampoline);
 	
 	void* startlevel = parse_bin_trampoline();
 	
@@ -90,7 +97,7 @@ void* parse_bin_thunk()
 	return startlevel;
 }
 
-int load_front_data_thunk()
+int load_front_data_thunk(void)
 {
 	should_uninstall = 1;
 	return load_front_data_trampoline();
@@ -131,7 +138,7 @@ int memcard_save_thunk(int force, int level)
 	return result;
 }
 
-void prepare_save()
+void prepare_save(void)
 {
 	/* Gather together a bunch of variables that are needed to setup the initial
 	   hook. This is all explained in the arm function itself. */
@@ -166,7 +173,7 @@ void prepare_save()
 	memcpy(&_racdoor_decryptor, decryptor, DECRYPTOR_SIZE * 4);
 }
 
-void pack_map_mask_thunk()
+void pack_map_mask_thunk(void)
 {
 	/* We intentionally do not call the trampoline so that the payload data will
 	   not be overwritten. */

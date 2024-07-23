@@ -2,8 +2,10 @@ Changelog
 =========
 
 v1.1
+----
 
-- Fix possible relocation bug.
+- Reworked function hooking system.
+- Fixed possible relocation bug.
 
 v1.0
 ----

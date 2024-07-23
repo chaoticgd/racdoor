@@ -7,86 +7,60 @@
 #include <racdoor/mips.h>
 #include <racdoor/module.h>
 
-static FuncHook* hook_head;
-static CallHook* call_hook_head;
+/* A function hook that also acts as a trampoline  */
+typedef union {
+	/* A trampoline template for a hook that hasn't been installed yet. */
+	struct {
+		/* A manual hook that hasn't been installed yet. */
+		u32 trap_1;
+		u32 trap_2;
+		u32 trap_3;
+	} template;
+	/* An auto hook that hasn't been installed yet. */
+	struct {
+		u32 trap;
+		u32 jump_original_func;
+		u32 jump_replacement_func;
+	} auto_template;
+	/* A primed trampoline that is ready to be called. */
+	struct {
+		u32 first_original_insn;
+		u32 jump_original_func;
+		u32 second_original_insn;
+	} trampoline;
+} FuncHook;
 
 extern FuncHook _racdoor_autohooks;
 extern FuncHook _racdoor_autohooks_end;
 
 void FlushCache(int mode);
 
-void install_hook(FuncHook* hook, void* original_func, void* replacement_func, void* trampoline)
+void install_hook(void* trampoline, void* original_func, void* replacement_func)
 {
-	/* Store information needed to uninstall the hook. */
-	hook->prev = NULL;
-	hook->next = hook_head;
-	hook_head = hook;
-	
-	hook->original_func = (u32*) original_func;
-	hook->trampoline = (u32*) trampoline;
+	FuncHook* hook = trampoline;
+	u32* original_insns = original_func;
 	
 	/* Prime the trampoline. */
-	hook->trampoline[0] = hook->original_func[0];
-	hook->trampoline[1] = MIPS_J(hook->original_func + 2);
-	hook->trampoline[2] = hook->original_func[1];
+	hook->trampoline.first_original_insn = original_insns[0];
+	hook->trampoline.jump_original_func = MIPS_J(&original_insns[2]);
+	hook->trampoline.second_original_insn = original_insns[1];
 	
 	/* Install the hook. */
-	hook->original_func[0] = MIPS_J(replacement_func);
-	hook->original_func[1] = MIPS_NOP();
+	original_insns[0] = MIPS_J(replacement_func);
+	original_insns[1] = MIPS_NOP();
 	
 	/* Flush the instruction cache. */
 	FlushCache(2);
 }
 
-void uninstall_hook(FuncHook* hook)
+void uninstall_hook(void* trampoline)
 {
-	/* Remove the hook from the list. */
-	if (hook->prev)
-		hook->prev->next = hook->next;
-	else
-		hook_head = hook->next;
-	
-	if (hook->next)
-		hook->next->prev = hook->prev;
+	FuncHook* hook = trampoline;
+	u32* original_func = MIPS_GET_TARGET(hook->trampoline.jump_original_func);
 	
 	/* Restore the original instructions. */
-	hook->original_func[0] = hook->trampoline[0];
-	hook->original_func[1] = hook->trampoline[2];
-	
-	/* Flush the instruction cache. */
-	FlushCache(2);
-}
-
-void install_call_hook(CallHook* hook, void* instruction, void* replacement_func)
-{
-	/* Store information needed to uninstall the hook. */
-	hook->prev = NULL;
-	hook->next = call_hook_head;
-	call_hook_head = hook;
-	
-	hook->instruction = instruction;
-	hook->original_func = MIPS_GET_TARGET(*hook->instruction);
-	
-	/* Install the hook. */
-	*hook->instruction = MIPS_JAL(replacement_func);
-	
-	/* Flush the instruction cache. */
-	FlushCache(2);
-}
-
-void uninstall_call_hook(CallHook* hook)
-{
-	/* Remove the hook from the list. */
-	if (hook->prev)
-		hook->prev->next = hook->next;
-	else
-		call_hook_head = hook->next;
-	
-	if (hook->next)
-		hook->next->prev = hook->prev;
-	
-	/* Restore the original target. */
-	*hook->instruction = MIPS_JAL(hook->original_func);
+	original_func[0] = hook->trampoline.first_original_insn;
+	original_func[1] = hook->trampoline.second_original_insn;
 	
 	/* Flush the instruction cache. */
 	FlushCache(2);
@@ -95,16 +69,41 @@ void uninstall_call_hook(CallHook* hook)
 void install_auto_hooks(void)
 {
 	for (FuncHook* hook = &_racdoor_autohooks; hook < &_racdoor_autohooks_end; hook++)
-		install_hook(hook, hook->original_func, hook->next, hook->trampoline);
+	{
+		void* original_func = MIPS_GET_TARGET(hook->auto_template.jump_original_func);
+		void* replacement_func = MIPS_GET_TARGET(hook->auto_template.jump_replacement_func);
+		install_hook(hook, original_func, replacement_func);
+	}
 }
 
 MODULE_LOAD_FUNC(install_auto_hooks);
 
-void uninstall_all_hooks(void)
+void uninstall_auto_hooks(void)
 {
-	for (FuncHook* hook = hook_head; hook != NULL; hook = hook->next)
+	for (FuncHook* hook = &_racdoor_autohooks; hook < &_racdoor_autohooks_end; hook++)
 		uninstall_hook(hook);
+}
+
+MODULE_UNLOAD_FUNC(uninstall_auto_hooks);
+
+void install_call_hook(CallHook* hook, void* call_insn, void* replacement_func)
+{
+	/* Store information needed to uninstall the hook. */
+	hook->call_insn = call_insn;
+	hook->original_func = MIPS_GET_TARGET(*hook->call_insn);
 	
-	for (CallHook* hook = call_hook_head; hook != NULL; hook = hook->next)
-		uninstall_call_hook(hook);
+	/* Install the hook. */
+	*hook->call_insn = MIPS_JAL(replacement_func);
+	
+	/* Flush the instruction cache. */
+	FlushCache(2);
+}
+
+void uninstall_call_hook(CallHook* hook)
+{
+	/* Restore the original target. */
+	*hook->call_insn = MIPS_JAL(hook->original_func);
+	
+	/* Flush the instruction cache. */
+	FlushCache(2);
 }
