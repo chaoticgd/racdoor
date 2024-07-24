@@ -5,7 +5,7 @@
 RACDOOR = ../..
 
 BIN = rdxlink
-SRCS = rdxlink.c $(RACDOOR)/sdk/elf.c $(RACDOOR)/sdk/linker.c
+SRCS = rdxlink.c $(RACDOOR)/sdk/buffer.c $(RACDOOR)/sdk/elf.c $(RACDOOR)/sdk/linker.c
 
 host: rdxlink
 ee:

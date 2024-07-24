@@ -5,7 +5,7 @@
 RACDOOR = ../..
 
 BIN = csvmerge
-SRCS = csvmerge.c
+SRCS = csvmerge.c $(RACDOOR)/sdk/buffer.c
 
 host: csvmerge
 ee:

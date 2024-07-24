@@ -5,7 +5,7 @@
 RACDOOR = ../..
 
 BIN = tblgen
-SRCS = tblgen.c $(RACDOOR)/sdk/elf.c
+SRCS = tblgen.c $(RACDOOR)/sdk/buffer.c $(RACDOOR)/sdk/elf.c
 
 host: tblgen
 ee:

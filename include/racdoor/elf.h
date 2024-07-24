@@ -122,9 +122,13 @@ typedef enum {
 	R_MIPS_GPREL32 = 12
 } ElfRelocationType;
 
+#ifdef _HOST
+
 ElfFileHeader* parse_elf_header(Buffer object);
 ElfSectionHeader* lookup_section(Buffer object, const char* section);
 u32 lookup_symbol(Buffer object, const char* symbol);
+
+#endif
 
 /* Racdoor specific. */
 
@@ -157,6 +161,10 @@ typedef struct {
 	u32 info;
 } RacdoorRelocation;
 
+#ifdef _HOST
+
 u32 lookup_runtime_symbol_index(Buffer symbolmap, const char* name);
+
+#endif
 
 #endif

@@ -5,7 +5,7 @@
 RACDOOR = ../..
 
 BIN = inject
-SRCS = inject.c compression.cpp $(RACDOOR)/sdk/crypto.c $(RACDOOR)/sdk/elf.c $(RACDOOR)/sdk/exploit.c $(RACDOOR)/sdk/save.c
+SRCS = inject.c compression.cpp $(RACDOOR)/sdk/buffer.c $(RACDOOR)/sdk/crypto.c $(RACDOOR)/sdk/elf.c $(RACDOOR)/sdk/exploit.c $(RACDOOR)/sdk/save.c
 
 host: inject
 ee:
