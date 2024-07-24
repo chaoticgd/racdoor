@@ -57,10 +57,10 @@ void uninstall_hook(void* trampoline);
 		".set pop\n" \
 	);
 
-/* Install hooks defined using the AUTO_HOOK macro. */
+/* Install all hooks defined using the AUTO_HOOK macro. */
 void install_auto_hooks(void);
 
-/* Restore all functions that have been hooked. */
+/* Uninstall all hooks defined using the AUTO_HOOK macro. */
 void uninstall_auto_hooks(void);
 
 /* A function call hook. */
