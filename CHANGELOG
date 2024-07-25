@@ -4,6 +4,7 @@ Changelog
 v1.1
 ----
 
+- Revised the RDX file format and build system.
 - Reworked function hooking system.
 - Fixed possible relocation bug.
 

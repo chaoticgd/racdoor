@@ -4,10 +4,10 @@
 
 RACDOOR = ../..
 
-BIN = inject
-SRCS = inject.c $(RACDOOR)/sdk/buffer.c $(RACDOOR)/sdk/crypto.c $(RACDOOR)/sdk/exploit.c $(RACDOOR)/sdk/save.c
+BIN = rdxpack
+SRCS = rdxpack.c compression.cpp $(RACDOOR)/sdk/buffer.c $(RACDOOR)/sdk/elf.c
 
-host: inject
+host: rdxpack
 ee:
 clean: compileclean linkclean
 

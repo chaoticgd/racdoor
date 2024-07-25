@@ -4,12 +4,43 @@
 @node Container Format
 @section Container Format
 
-RDX object files exist in two forms. The first exists before the RDX file has
-been packed into a save game and consists of a standard ELF object file. The
-second is the representation used for RDX files that have been packed, and
-consists of a custom file format designed with space efficiency in mind.
+@node File Header
+@section File Header
 
-The header information that follows relates to the packed version of the format.
+This is present in loose @code{.rdx} files but is not included
+directly in implanted save games.
+
+@table @code
+
+@item magic
+Magic identifier used for determining if a given file is in the RDX format.
+
+Must be equal to @code{RDX!} in ASCII.
+
+@item version
+Format version number. Used for ensuring that the version of the tool used to
+generate the file is compatible with the version of the tool used to consume it.
+
+@item payload_ofs
+The offset of the beginning of the payload data in the RDX file.
+
+@item payload_size
+The size of the payload data in the RDX file.
+
+@item muffin
+A string used to determine how the file was generated e.g. the relative file
+path of the ELF file used to generate it.
+
+@item serial
+The serial number of the build of the game the file targets.
+
+@item entry
+The payload entry point address.
+
+@item symbols
+A structure containing the values of all the exploit symbols.
+
+@end table
 
 @node Payload Header
 @subsection Payload Header

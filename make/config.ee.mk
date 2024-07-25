@@ -12,6 +12,7 @@ OBJDUMP = ee-objdump
 CSVMERGE = $(RACDOOR)/tools/csvmerge/csvmerge
 INJECT = $(RACDOOR)/tools/inject/inject
 RDXLINK = $(RACDOOR)/tools/rdxlink/rdxlink
+RDXPACK = $(RACDOOR)/tools/rdxpack/rdxpack
 TBLGEN = $(RACDOOR)/tools/tblgen/tblgen
 
 INCLUDES += -I$(RACDOOR)/include

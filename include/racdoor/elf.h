@@ -132,6 +132,41 @@ u32 lookup_symbol(Buffer object, const char* symbol);
 
 /* Racdoor specific. */
 
+#define RDX_FORMAT_VERSION 1
+
+typedef struct {
+	u32 max_level;
+	u32 help_message;
+	u32 help_gadget;
+	u32 help_log;
+	u32 initial_hook;
+	u32 return_to_game;
+	u32 original_instruction;
+	u32 trampoline;
+	u32 trampoline_offset;
+	u32 trampoline_block;
+	u32 decryptor;
+	u32 decryptor_block;
+	u32 payload;
+	u32 payload_end;
+	u32 payload_block;
+	u32 modload_hook_ofs;
+	u32 modupdate_hook_ofs;
+	u32 modunload_hook_ofs;
+} RacdoorSymbolHeader;
+
+/* RDX file header. */
+typedef struct {
+	u32 magic;
+	u32 version;
+	u32 payload_ofs;
+	u32 payload_size;
+	char muffin[64];
+	char serial[16];
+	u32 entry;
+	RacdoorSymbolHeader symbols;
+} RacdoorFileHeader;
+
 typedef struct {
 	u32 dest;
 	u16 source;
