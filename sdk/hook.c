@@ -9,9 +9,8 @@
 
 /* A trampoline for a function entry point hook. */
 typedef union {
-	/* A trampoline template for a hook that hasn't been installed yet. */
+	/* A manual hook that hasn't been installed yet. */
 	struct {
-		/* A manual hook that hasn't been installed yet. */
 		u32 trap_1;
 		u32 trap_2;
 		u32 trap_3;

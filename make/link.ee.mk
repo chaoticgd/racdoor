@@ -30,7 +30,7 @@ $(BIN).%.elf: $(RDXLINK) $(RACDOOR)/sdk/loader.ee.o $(OBJS) $(LIBS) $(BIN).%.tbl
 $(BIN).%.rdx: $(RDXPACK) $(BIN).%.elf
 	$(RDXPACK) $(BIN).$*.elf $@
 
-# Automatically generate disassemblies for all the RDX files.
+# Automatically generate disassemblies for all the ELF files.
 $(BIN).%.dis: $(BIN).%.elf
 	$(OBJDUMP) -D $(BIN).$*.elf > $@
 

@@ -1,7 +1,8 @@
 @node Integration with Legacy Planetary Intelligence Agency Technology
 @chapter Integration with Legacy Planetary Intelligence Agency Technology
 
-Due to a lack of funding, we have made use of Ghidra, a suite of reverse engineering tools developed by the United States National Security Agency, for
+Due to a lack of funding, we have made use of Ghidra, a suite of reverse
+engineering tools developed by the United States National Security Agency, for
 reverse engineering the games and to automate the collection of addresses,
 among other things.
 
