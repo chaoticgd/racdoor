@@ -7,9 +7,9 @@
 #include <racdoor/hook.h>
 #include <racdoor/module.h>
 
-static CallHook load_hook = {};
-static CallHook update_hook = {};
-static CallHook unload_hook = {};
+static CallHook load_hook;
+static CallHook update_hook;
+static CallHook unload_hook;
 
 /* All relative to the startlevel function. */
 extern void _racdoor_modload_hook_ofs;

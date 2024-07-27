@@ -17,4 +17,4 @@ TBLGEN = $(RACDOOR)/tools/tblgen/tblgen
 
 INCLUDES += -I$(RACDOOR)/include
 
-COMPILEFLAGS += -std=c99 -Os -G0 -ffreestanding -mabi=eabi -mno-abicalls -fno-exceptions -Wall -Werror -D_EE
+COMPILEFLAGS += -D_EE -std=c99 -Os -Wall -Werror -G0 -ffreestanding -mabi=eabi -mno-abicalls -fno-exceptions -fno-common

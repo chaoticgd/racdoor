@@ -41,7 +41,7 @@ extern u32 _racdoor_decryptor;
 extern u32 _racdoor_payload;
 extern u32 _racdoor_payload_end;
 
-u32 decryptor[DECRYPTOR_SIZE] = {};
+u32 decryptor[DECRYPTOR_SIZE];
 
 static char should_uninstall = 0;
 
