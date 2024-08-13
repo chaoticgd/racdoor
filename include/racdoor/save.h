@@ -12,6 +12,7 @@
 
 enum SaveBlockType {
 	BLOCK_Level = 0,
+	BLOCK_Unlocks = 10,
 	BLOCK_HelpDataMessages = 16,
 	BLOCK_HelpDataGadgets = 17,
 	BLOCK_HelpDataMisc = 18,

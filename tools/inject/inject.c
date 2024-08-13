@@ -76,6 +76,17 @@ int main(int argc, char** argv)
 
 void inject_rac(SaveSlot* save, Buffer rdx, u32 key)
 {
+	/* Make sure the player has more than 8 gadgets unlocked. */
+	SaveBlock* unlocks = lookup_block(&save->game, BLOCK_Unlocks);
+	
+	u32 gadgets_unlocked = 0;
+	for (u32 i = 0; i < unlocks->size; i++)
+		if (unlocks->data[i])
+			gadgets_unlocked++;
+	
+	CHECK(gadgets_unlocked > 8,
+		"A save file with more than 8 quick select equipable gadgets unlocked is needed.\n");
+	
 	/* Validate the RDX header. */
 	RacdoorFileHeader* header = buffer_get(rdx, 0, sizeof(RacdoorFileHeader), "RDX file header");
 	CHECK(header->magic == FOURCC("RDX!"),

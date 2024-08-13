@@ -6,6 +6,8 @@ v1.1
 
 - Revised the RDX file format and build system.
 - Reworked function hooking system.
+- Prevented the compiler from emitting common symbols for globals.
+- Added check to make sure the save game being injected will work.
 - Fixed possible relocation bug.
 
 v1.0
