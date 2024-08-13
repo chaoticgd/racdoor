@@ -25,8 +25,8 @@ typedef struct {
 	u32 overlay_addresses[MAX_OVERLAYS];
 	u32 highest_address;
 	s32 runtime_index;
-	s8 overlay;
-	s8 used;
+	b8 overlay;
+	b8 used;
 } Symbol;
 
 #define MAX_LEVELS 100
@@ -92,7 +92,7 @@ int main(int argc, char** argv)
 	Buffer input_table = {};
 	const char* serial = NULL;
 	const char* output_object_path = NULL;
-	int verbose = 0;
+	b8 verbose = FALSE;
 	
 	/* Parse the command line arguments. */
 	for (int i = 1; i < argc; i++)
@@ -116,7 +116,7 @@ int main(int argc, char** argv)
 			output_object_path = argv[i];
 		}
 		else if (strcmp(argv[i], "-v") == 0)
-			verbose = 1;
+			verbose = TRUE;
 		else
 		{
 			input_files[input_file_count] = read_file(argv[i]);
@@ -236,7 +236,7 @@ static SymbolTable parse_table(Buffer input)
 							   injector so we need to make sure they are
 							   retained in the output. */
 							if (strncmp(string, "_racdoor_", 9) == 0)
-								table.symbols[symbol].used = 1;
+								table.symbols[symbol].used = TRUE;
 						}
 						else
 							table.symbols[symbol].comment = string;
@@ -298,7 +298,7 @@ static SymbolTable parse_table(Buffer input)
 							CHECK(overlay < table.overlay_count, "Invalid column on line %d.", symbol + 1);
 							
 							table.symbols[symbol].overlay_addresses[overlay] = value;
-							table.symbols[symbol].overlay = 1;
+							table.symbols[symbol].overlay = TRUE;
 							
 							CHECK(table.symbols[symbol].core_address == 0,
 								"Symbol '%s' has multiple addresses in the CSV file.",
@@ -334,21 +334,21 @@ static u32 parse_table_header(const char** p, SymbolTable* table, Column* column
 	{
 		CHECK(column < MAX_COLUMNS, "Too many columns.");
 		
-		int quoted = 0;
+		b8 quoted = FALSE;
 		if (*ptr == '"')
 		{
-			quoted = 1;
+			quoted = TRUE;
 			ptr++;
 		}
 		
-		int done = 0;
+		b8 done = FALSE;
 		for (u32 i = 0; i < ARRAY_SIZE(column_names); i++)
 		{
 			if (strncmp(ptr, column_names[i].string, strlen(column_names[i].string)) == 0)
 			{
 				columns[column] = column_names[i].column;
 				ptr += strlen(column_names[i].string);
-				done = 1;
+				done = TRUE;
 				break;
 			}
 		}
@@ -502,7 +502,7 @@ static u32 parse_object_file(SymbolTable* table, Buffer object)
 		
 		for (u32 j = 0; j < table->symbol_count; j++)
 			if (table->symbols[j].name && strcmp(table->symbols[j].name, name) == 0)
-				table->symbols[j].used = 1;
+				table->symbols[j].used = TRUE;
 	}
 	
 	u32 relocation_count = 0;

@@ -8,7 +8,9 @@ v1.1
 - Reworked function hooking system.
 - Prevented the compiler from emitting common symbols for globals.
 - Added check to make sure the save game being injected will work.
+- Updated CHECK and ERROR macros to automatically insert newlines.
 - Fixed possible relocation bug.
+- Added boolean types.
 
 v1.0
 ----

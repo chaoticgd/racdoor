@@ -23,6 +23,16 @@ typedef unsigned long long u64;
 typedef float f32;
 typedef double f64;
 
+typedef unsigned char b8;
+typedef unsigned short b16;
+typedef unsigned int b32;
+typedef unsigned long long b64;
+
+typedef enum {
+	FALSE = 0,
+	TRUE = 1
+} BOOL;
+
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 

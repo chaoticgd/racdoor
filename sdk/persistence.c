@@ -43,7 +43,7 @@ extern u32 _racdoor_payload_end;
 
 u32 decryptor[DECRYPTOR_SIZE];
 
-static char should_uninstall = 0;
+static b8 should_uninstall = FALSE;
 
 void* ParseBin(void);
 void* parse_bin_thunk(void);
@@ -99,7 +99,7 @@ void* parse_bin_thunk(void)
 
 int load_front_data_thunk(void)
 {
-	should_uninstall = 1;
+	should_uninstall = TRUE;
 	return load_front_data_trampoline();
 }
 
@@ -181,6 +181,6 @@ void pack_map_mask_thunk(void)
 
 int memcard_restore_data_thunk(char* addr, int index, mc_data* mcd)
 {
-	should_uninstall = 1;
+	should_uninstall = TRUE;
 	return memcard_restore_data_trampoline(addr, index, mcd);
 }
