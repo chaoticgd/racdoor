@@ -22,7 +22,7 @@ typedef struct {
 } SectionWork;
 
 void pack_symbols(RacdoorSymbolHeader* symbols, Buffer elf);
-u32 pack_payload(RacdoorFileHeader* file_header, Buffer payload, Buffer elf, int enable_compression);
+u32 pack_payload(RacdoorFileHeader* file_header, Buffer payload, Buffer elf, u32 payload_address, int enable_compression);
 
 /* From compression.cpp. */
 void compress_wad(char** dest, unsigned int* dest_size, const char* src, unsigned int src_size, const char* muffin);
@@ -86,10 +86,13 @@ int main(int argc, char** argv)
 	/* Pack the exploit symbols into the header. */
 	pack_symbols(&header->symbols, elf);
 	
-	/* Convert the ELF file into an RDX payload. */
 	offset = ALIGN(offset, 64);
+	
+	/* Convert the ELF file into an RDX payload. */
+	Buffer payload = sub_buffer(rdx, offset, MAX_OUTPUT_SIZE - offset, "payload");
+	
 	header->payload_ofs = offset;
-	header->payload_size = pack_payload(header, sub_buffer(rdx, offset, MAX_OUTPUT_SIZE - offset, "payload"), elf, enable_compression);
+	header->payload_size = pack_payload(header, payload, elf, header->symbols.payload, enable_compression);
 	rdx.size = header->payload_ofs + header->payload_size;
 	
 	write_file(output_rdx_path, rdx);
@@ -117,7 +120,7 @@ void pack_symbols(RacdoorSymbolHeader* symbols, Buffer elf)
 	symbols->modunload_hook_ofs = lookup_symbol(elf, "_racdoor_modunload_hook_ofs");
 }
 
-u32 pack_payload(RacdoorFileHeader* file_header, Buffer payload, Buffer elf, int enable_compression)
+u32 pack_payload(RacdoorFileHeader* file_header, Buffer payload, Buffer elf, u32 payload_address, int enable_compression)
 {
 	u32 offset = 0;
 	
@@ -234,7 +237,6 @@ u32 pack_payload(RacdoorFileHeader* file_header, Buffer payload, Buffer elf, int
 	}
 	
 	CHECK(entry_point_offset != 0, "Bad entry point.\n");
-	u32 payload_address = lookup_symbol(elf, "_racdoor_payload");
 	file_header->entry = payload_address + entry_point_offset;
 	
 	/* Write out all the FILL sections. */
