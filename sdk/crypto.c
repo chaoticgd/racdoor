@@ -38,7 +38,7 @@ void gen_xor_decryptor(u32* dest, u32 payload, u32 payload_end, u32 entry, u32 k
 	*ptr++ = MIPS_NOP();
 	*ptr++ = MIPS_NOP();
 	
-	CHECK(ptr - dest == DECRYPTOR_ENTRY_OFFSET, "Decryptor code out of sync with DECRYPTOR_ENTRY_OFFSET.\n");
+	CHECK(ptr - dest == DECRYPTOR_ENTRY_OFFSET, "Decryptor code out of sync with DECRYPTOR_ENTRY_OFFSET.");
 	
 	/* Save overwritten registers on the stack. */
 	*ptr++ = MIPS_SQ(MIPS_A0, 0xf0 - 0x1c0, MIPS_SP);
@@ -52,7 +52,7 @@ void gen_xor_decryptor(u32* dest, u32 payload, u32 payload_end, u32 entry, u32 k
 	/* Load immediates. */
 	*ptr++ = MIPS_LUI(MIPS_S5, payload_end >> 16);
 	
-	CHECK(ptr - dest == DECRYPTOR_KEY_HIGH_OFFSET, "Decryptor code out of sync with DECRYPTOR_KEY_HIGH_OFFSET.\n");
+	CHECK(ptr - dest == DECRYPTOR_KEY_HIGH_OFFSET, "Decryptor code out of sync with DECRYPTOR_KEY_HIGH_OFFSET.");
 	*ptr++ = MIPS_LUI(MIPS_T2, key >> 16);
 	
 	*ptr++ = MIPS_LUI(MIPS_A0, payload >> 16);
@@ -60,7 +60,7 @@ void gen_xor_decryptor(u32* dest, u32 payload, u32 payload_end, u32 entry, u32 k
 	*ptr++ = MIPS_ORI(MIPS_A0, MIPS_A0, payload);
 	*ptr++ = MIPS_ORI(MIPS_S5, MIPS_S5, payload_end);
 	
-	CHECK(ptr - dest == DECRYPTOR_KEY_LOW_OFFSET, "Decryptor code out of sync with DECRYPTOR_KEY_LOW_OFFSET.\n");
+	CHECK(ptr - dest == DECRYPTOR_KEY_LOW_OFFSET, "Decryptor code out of sync with DECRYPTOR_KEY_LOW_OFFSET.");
 	*ptr++ = MIPS_ORI(MIPS_T2, MIPS_T2, key);
 	*ptr++ = MIPS_NOP();
 	
@@ -91,7 +91,7 @@ void gen_xor_decryptor(u32* dest, u32 payload, u32 payload_end, u32 entry, u32 k
 	*ptr++ = MIPS_NOP();
 	*ptr++ = MIPS_NOP();
 	
-	CHECK(ptr - dest == DECRYPTOR_SIZE, "Decryptor code out of sync with DECRYPTOR_SIZE.\n");
+	CHECK(ptr - dest == DECRYPTOR_SIZE, "Decryptor code out of sync with DECRYPTOR_SIZE.");
 }
 
 #endif

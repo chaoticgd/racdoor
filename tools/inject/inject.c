@@ -28,7 +28,7 @@ int main(int argc, char** argv)
 		if (strcmp(argv[i], "-k") == 0)
 		{
 			i++;
-			CHECK(i < argc, "Expected key.\n");
+			CHECK(i < argc, "Expected key.");
 			key = strtoll(argv[i], NULL, 0);
 		}
 		else
@@ -44,7 +44,7 @@ int main(int argc, char** argv)
 	}
 	
 	CHECK(input_save_path && input_rdx_path && output_save_path,
-		"usage: %s [-k <key>] <input saveN.bin> <input rdx> <output saveN.bin>\n",
+		"usage: %s [-k <key>] <input saveN.bin> <input rdx> <output saveN.bin>",
 		argc > 0 ? argv[0] : "inject");
 	
 	Buffer file = read_file(input_save_path);
@@ -58,16 +58,16 @@ int main(int argc, char** argv)
 			inject_rac(&save, rdx, key);
 			break;
 		case GC_GAME_BLOCK_COUNT:
-			printf("Going Commando support not yet implemented.\n");
+			printf("Going Commando support not yet implemented.");
 			break;
 		case UYA_GAME_BLOCK_COUNT:
-			printf("Up Your Arsenal support not yet implemented.\n");
+			printf("Up Your Arsenal support not yet implemented.");
 			break;
 		case DL_GAME_BLOCK_COUNT:
-			printf("Deadlocked support not yet implemented.\n");
+			printf("Deadlocked support not yet implemented.");
 			break;
 		default:
-			ERROR("Unexpected block count.\n");
+			ERROR("Unexpected block count.");
 	}
 	
 	update_checksums(&save);
@@ -85,14 +85,14 @@ void inject_rac(SaveSlot* save, Buffer rdx, u32 key)
 			gadgets_unlocked++;
 	
 	CHECK(gadgets_unlocked > 8,
-		"A save file with more than 8 quick select equipable gadgets unlocked is needed.\n");
+		"A save file with more than 8 quick select equipable gadgets unlocked is needed.");
 	
 	/* Validate the RDX header. */
 	RacdoorFileHeader* header = buffer_get(rdx, 0, sizeof(RacdoorFileHeader), "RDX file header");
 	CHECK(header->magic == FOURCC("RDX!"),
-		"RDX file has bad magic number.\n");
+		"RDX file has bad magic number.");
 	CHECK(header->version == RDX_FORMAT_VERSION,
-		"RDX file has wrong version number (is %u, should be %u).\n",
+		"RDX file has wrong version number (is %u, should be %u).",
 		header->version, RDX_FORMAT_VERSION);
 	
 	Buffer payload = sub_buffer(rdx, header->payload_ofs, header->payload_size, "RDX payload");
@@ -104,7 +104,7 @@ void inject_rac(SaveSlot* save, Buffer rdx, u32 key)
 	u8* data = checked_malloc(max_size);
 	memset(data, 0, max_size);
 	
-	CHECK(payload.size <= max_size, "RDX payload too big!\n");
+	CHECK(payload.size <= max_size, "RDX payload too big!");
 	memcpy(data, payload.data, payload.size);
 	
 	printf("entry: %x\n", header->entry);
@@ -125,8 +125,8 @@ void inject_rac(SaveSlot* save, Buffer rdx, u32 key)
 	
 	SaveBlock* voice_on = lookup_block(&save->game, BLOCK_HelpVoiceOn);
 	SaveBlock* text_on = lookup_block(&save->game, BLOCK_HelpTextOn);
-	CHECK(voice_on->size == 1, "Incorrectly sized VoiceOn block.\n");
-	CHECK(text_on->size == 1, "Incorrectly sized TextOn block.\n");
+	CHECK(voice_on->size == 1, "Incorrectly sized VoiceOn block.");
+	CHECK(text_on->size == 1, "Incorrectly sized TextOn block.");
 	params.help_voice_on = (char*) voice_on->data;
 	params.help_text_on = (char*) text_on->data;
 	
@@ -145,14 +145,14 @@ void inject_rac(SaveSlot* save, Buffer rdx, u32 key)
 	params.help_data_misc_count = help_data_misc->size / sizeof(HelpDatum);
 	
 	SaveBlock* help_log_pos = lookup_block(&save->game, BLOCK_HelpLogPos);
-	CHECK(help_log_pos->size == 4, "Incorrectly sized HelpLogPos block.\n");
+	CHECK(help_log_pos->size == 4, "Incorrectly sized HelpLogPos block.");
 	params.help_log_pos = (int*) help_log_pos->data;
 	
 	params.help_log = header->symbols.help_log;
 	params.initial_hook = header->symbols.initial_hook;
 	
 	SaveBlock* trampoline_save = lookup_block(&save->game, header->symbols.trampoline_block);
-	CHECK((u64) header->symbols.trampoline_offset + 8 <= trampoline_save->size, "Symbol _racdoor_target_offset is too big.\n");
+	CHECK((u64) header->symbols.trampoline_offset + 8 <= trampoline_save->size, "Symbol _racdoor_target_offset is too big.");
 	params.trampoline = (u32*) &trampoline_save->data[header->symbols.trampoline_offset];
 	params.trampoline_target = header->symbols.decryptor + DECRYPTOR_ENTRY_OFFSET;
 	

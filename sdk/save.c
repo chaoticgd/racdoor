@@ -21,7 +21,7 @@ SaveSlot parse_save(Buffer file)
 	u32 level = 0;
 	while (offset + 3 < file.size)
 	{
-		CHECK(level < MAX_LEVELS, "Too many levels.\n");
+		CHECK(level < MAX_LEVELS, "Too many levels.");
 		
 		save.levels[level] = parse_blocks(sub_buffer(file, offset, save.header->level_size, "level section"));
 		offset += save.header->level_size;
@@ -45,12 +45,12 @@ SaveSlotBlockList parse_blocks(Buffer file)
 	
 	Buffer checksum_buffer = sub_buffer(file, offset, list.checksum->size, "checksum data");
 	s32 checksum_value = compute_checksum(checksum_buffer.data, checksum_buffer.size);
-	CHECK(checksum_value == list.checksum->value, "Bad checksum.\n");
+	CHECK(checksum_value == list.checksum->value, "Bad checksum.");
 
 	u32 block = 0;
 	for (;;)
 	{
-		CHECK(block < MAX_BLOCKS, "Too many blocks.\n");
+		CHECK(block < MAX_BLOCKS, "Too many blocks.");
 		
 		list.blocks[block] = buffer_get(file, offset, sizeof(SaveBlock), "block header");
 		offset += sizeof(SaveBlock);
@@ -100,7 +100,7 @@ SaveBlock* lookup_block(SaveSlotBlockList* list, s32 type)
 		if (list->blocks[i]->type == type)
 			block = list->blocks[i];
 	
-	CHECK(block, "No block of type %d found.\n", type);
+	CHECK(block, "No block of type %d found.", type);
 	return block;
 }
 

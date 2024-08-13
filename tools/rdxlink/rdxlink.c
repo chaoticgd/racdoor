@@ -66,7 +66,7 @@ ElfSections parse_elf_sections(Buffer elf, ElfFileHeader* header)
 	ElfSections result = {};
 	
 	ElfSectionHeader* sections = buffer_get(elf, header->shoff, header->shnum * sizeof(ElfSectionHeader), "section headers");
-	CHECK(header->shstrndx < header->shnum, "Invalid shstrndx.\n");
+	CHECK(header->shstrndx < header->shnum, "Invalid shstrndx.");
 	
 	for (u32 i = 0; i < header->shnum; i++)
 	{
@@ -76,23 +76,23 @@ ElfSections parse_elf_sections(Buffer elf, ElfFileHeader* header)
 			   static relocations below, and copy dynamic relocations to be
 			   applied at runtime. */
 			
-			CHECK(result.reloc_section_count < MAX_RELOC_SECTIONS, "Too many SHT_REL sections.\n");
+			CHECK(result.reloc_section_count < MAX_RELOC_SECTIONS, "Too many SHT_REL sections.");
 			RelocationSection* output = &result.reloc_sections[result.reloc_section_count++];
 			
 			output->relocations = buffer_get(elf, sections[i].offset, sections[i].size, "relocations");
 			output->relocation_count = sections[i].size / sizeof(ElfRelocation);
 			
-			CHECK(sections[i].info < header->shnum, "Relocation section has invalid info field.\n");
+			CHECK(sections[i].info < header->shnum, "Relocation section has invalid info field.");
 			ElfSectionHeader* target = &sections[sections[i].info];
 			output->target.header = target;
 			output->target.buffer = sub_buffer(elf, target->offset, target->size, "section to be relocated");
 			
-			CHECK(sections[i].link < header->shnum, "Relocation section has invalid link field.\n");
+			CHECK(sections[i].link < header->shnum, "Relocation section has invalid link field.");
 			ElfSectionHeader* symtab = &sections[sections[i].link];
 			output->symtab.header = symtab;
 			output->symtab.buffer = sub_buffer(elf, symtab->offset, symtab->size, "linked symbol table section");
 			
-			CHECK(symtab->link < header->shnum, "Symbol table section has invalid link field.\n");
+			CHECK(symtab->link < header->shnum, "Symbol table section has invalid link field.");
 			ElfSectionHeader* strtab = &sections[symtab->link];
 			output->strtab.header = strtab;
 			output->strtab.buffer = sub_buffer(elf, strtab->offset, strtab->size, "linked string table section");
@@ -126,7 +126,7 @@ void process_relocations(ElfSections* sections)
 	RacdoorRelocation* reloc_out = (RacdoorRelocation*) sections->racdoor_relocs.buffer.data;
 	RacdoorRelocation* reloc_end = (RacdoorRelocation*) (sections->racdoor_relocs.buffer.data + sections->racdoor_relocs.buffer.size);
 	
-	CHECK(reloc_out, "Missing .racdoor.relocs section.\n");
+	CHECK(reloc_out, "Missing .racdoor.relocs section.");
 	
 	u32 dynamic_relocation_count = 0;
 	
@@ -151,7 +151,7 @@ void process_relocations(ElfSections* sections)
 				   partial link, it hasn't been applied yet. Hence, we apply
 				   the relocation now. */
 				
-				CHECK(symbol->shndx < sections->count, "Symbol has invalid shndx field.\n");
+				CHECK(symbol->shndx < sections->count, "Symbol has invalid shndx field.");
 				ElfSectionHeader* symbol_section = &sections->headers[symbol->shndx];
 				
 				u32* dest = buffer_get(section->target.buffer, reloc_in->offset, 4, "relocation target");
@@ -170,7 +170,7 @@ void process_relocations(ElfSections* sections)
 				   converted to the equivalent .racdoor.addrtbl index. */
 				u32 runtime_index = lookup_runtime_symbol_index(sections->racdoor_symbolmap.buffer, name);
 				
-				CHECK(reloc_out < reloc_end, "Not enough space for relocations.\n");
+				CHECK(reloc_out < reloc_end, "Not enough space for relocations.");
 				reloc_out->address = section->target.header->addr + reloc_in->offset;
 				reloc_out->info = type | (runtime_index << 8);
 				reloc_out++;
@@ -185,7 +185,7 @@ void process_relocations(ElfSections* sections)
 		}
 	}
 	
-	CHECK(reloc_out < reloc_end, "Not enough space for relocations.\n");
+	CHECK(reloc_out < reloc_end, "Not enough space for relocations.");
 	reloc_out->address = 0xffffffff;
 	reloc_out->info = 0;
 	

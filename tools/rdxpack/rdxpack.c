@@ -53,7 +53,7 @@ int main(int argc, char** argv)
 	}
 	
 	CHECK(input_elf_path && output_rdx_path,
-		"usage: %s [-u] <input elf> <output rdx>\n",
+		"usage: %s [-u] <input elf> <output rdx>",
 		argc > 0 ? argv[0] : "rdxpack");
 	
 	Buffer elf = read_file(input_elf_path);
@@ -126,7 +126,7 @@ u32 pack_payload(RacdoorFileHeader* file_header, Buffer payload, Buffer elf, u32
 	
 	printf("%.2fkb total\n", payload.size / 1024.f);
 	
-	CHECK((u64) offset + sizeof(RacdoorPayloadHeader) <= payload.size, "RDX too big!\n");
+	CHECK((u64) offset + sizeof(RacdoorPayloadHeader) <= payload.size, "RDX too big!");
 	RacdoorPayloadHeader* payload_header = (RacdoorPayloadHeader*) &payload.data[offset];
 	offset += sizeof(RacdoorPayloadHeader);
 	
@@ -201,7 +201,7 @@ u32 pack_payload(RacdoorFileHeader* file_header, Buffer payload, Buffer elf, u32
 		if (work[i].type == SLT_IGNORE)
 			continue;
 		
-		CHECK((u64) offset + sizeof(RacdoorLoadHeader) <= payload.size, "RDX too big!\n");
+		CHECK((u64) offset + sizeof(RacdoorLoadHeader) <= payload.size, "RDX too big!");
 		offset += sizeof(RacdoorLoadHeader);
 	}
 	
@@ -222,21 +222,21 @@ u32 pack_payload(RacdoorFileHeader* file_header, Buffer payload, Buffer elf, u32
 		
 		RacdoorLoadHeader* load_header = &payload_header->loads[load_index++];
 		
-		CHECK(offset <= 0xffff, "Cannot encode load offset.\n");
-		CHECK(sections[i].size <= 0xffff, "Cannot encode load size.\n");
+		CHECK(offset <= 0xffff, "Cannot encode load offset.");
+		CHECK(sections[i].size <= 0xffff, "Cannot encode load size.");
 		load_header->dest = sections[i].addr;
 		load_header->source = (u16) offset;
 		load_header->size = (u16) sections[i].size;
 		
 		u8* data = buffer_get(elf, sections[i].offset, sections[i].size, "RDX section");
-		CHECK((u64) offset + sections[i].size <= payload.size, "RDX too big!\n");
+		CHECK((u64) offset + sections[i].size <= payload.size, "RDX too big!");
 		memcpy(&payload.data[offset], data, sections[i].size);
 		offset += sections[i].size;
 		
 		payload_header->copy_count++;
 	}
 	
-	CHECK(entry_point_offset != 0, "Bad entry point.\n");
+	CHECK(entry_point_offset != 0, "Bad entry point.");
 	file_header->entry = payload_address + entry_point_offset;
 	
 	/* Write out all the FILL sections. */
@@ -247,8 +247,8 @@ u32 pack_payload(RacdoorFileHeader* file_header, Buffer payload, Buffer elf, u32
 		
 		RacdoorLoadHeader* load_header = &payload_header->loads[load_index++];
 		
-		CHECK(offset <= 0xffff, "Cannot encode load offset.\n");
-		CHECK(sections[i].size <= 0xffff, "Cannot encode load size.\n");
+		CHECK(offset <= 0xffff, "Cannot encode load offset.");
+		CHECK(sections[i].size <= 0xffff, "Cannot encode load size.");
 		load_header->dest = sections[i].addr;
 		load_header->source = 0; /* Fill value. */
 		load_header->size = (u16) sections[i].size;
@@ -267,13 +267,13 @@ u32 pack_payload(RacdoorFileHeader* file_header, Buffer payload, Buffer elf, u32
 		/* Minimum alignment for DMA transfers. */
 		offset = ALIGN(offset, 16);
 		
-		CHECK(offset <= 0xffff, "Cannot encode load offset.\n");
-		CHECK(sections[i].size <= 0xffff, "Cannot encode load size.\n");
+		CHECK(offset <= 0xffff, "Cannot encode load offset");
+		CHECK(sections[i].size <= 0xffff, "Cannot encode load size.");
 		load_header->dest = sections[i].addr;
 		load_header->source = (u16) offset;
 		load_header->size = (u16) 0; /* Unused. */
 		
-		CHECK((u64) offset + work[i].compressed.size <= payload.size, "RDX too big!\n");
+		CHECK((u64) offset + work[i].compressed.size <= payload.size, "RDX too big!");
 		memcpy(&payload.data[offset], work[i].compressed.data, work[i].compressed.size);
 		offset += work[i].compressed.size;
 		

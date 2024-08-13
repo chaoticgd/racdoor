@@ -100,19 +100,19 @@ int main(int argc, char** argv)
 		if (strcmp(argv[i], "-t") == 0)
 		{
 			i++;
-			CHECK(i < argc, "Expected input table path.\n");
+			CHECK(i < argc, "Expected input table path.");
 			input_table = read_file(argv[i]);
 		}
 		else if (strcmp(argv[i], "-s") == 0)
 		{
 			i++;
-			CHECK(i < argc, "Expected serial.\n");
+			CHECK(i < argc, "Expected serial.");
 			serial = argv[i];
 		}
 		else if (strcmp(argv[i], "-o") == 0)
 		{
 			i++;
-			CHECK(i < argc, "Expected output path.\n");
+			CHECK(i < argc, "Expected output path.");
 			output_object_path = argv[i];
 		}
 		else if (strcmp(argv[i], "-v") == 0)
@@ -126,7 +126,7 @@ int main(int argc, char** argv)
 	}
 	
 	CHECK(input_file_count && input_table.data && serial && output_object_path,
-		"usage: %s <input archives and objects...> -t <input table> -s <serial> -o <output object> [-v]\n",
+		"usage: %s <input archives and objects...> -t <input table> -s <serial> -o <output object> [-v]",
 		(argc > 0) ? argv[0] : "tblgen");
 	
 	/* Parse the input CSV file into a symbol table in memory. */
@@ -141,7 +141,7 @@ int main(int argc, char** argv)
 		else if (strncmp(input_files[i].data, "\x7f" "ELF", 4) == 0)
 			relocation_count += parse_object_file(&table, input_files[i]);
 		else
-			ERROR("Cannot determine type of input file '%s'.\n", input_file_paths[i]);
+			ERROR("Cannot determine type of input file '%s'.", input_file_paths[i]);
 	
 	/* Sort all the symbols by their highest addresses. */
 	sort_symbols(&table);
@@ -200,7 +200,7 @@ static SymbolTable parse_table(Buffer input)
 			
 			while (*ptr != '\n' && ptr < input.data + input.size)
 			{
-				CHECK(column < column_count, "Mismatched columns on line %d.\n", symbol + 1);
+				CHECK(column < column_count, "Mismatched columns on line %d.", symbol + 1);
 				
 				switch (columns[column])
 				{
@@ -222,7 +222,7 @@ static SymbolTable parse_table(Buffer input)
 						
 						if (!end)
 							end = strstr(ptr, "\n");
-						CHECK(end, "Unexpected end of input table file on line %d.\n", symbol + 1);
+						CHECK(end, "Unexpected end of input table file on line %d.", symbol + 1);
 						
 						char* string = checked_malloc(end - begin + 1);
 						memcpy(string, begin, end - begin);
@@ -263,7 +263,7 @@ static SymbolTable parse_table(Buffer input)
 						else if (strncmp(ptr, "TLS", 3) == 0)
 							table.symbols[symbol].type = STT_TLS;
 						else
-							ERROR("Invalid TYPE on line %d.\n", symbol + 1);
+							ERROR("Invalid TYPE on line %d.", symbol + 1);
 						
 						while (*ptr >= 'A' && *ptr <= 'Z')
 							ptr++;
@@ -276,7 +276,7 @@ static SymbolTable parse_table(Buffer input)
 						
 						char* end = NULL;
 						u32 value = (u32) strtoul(ptr, &end, 16);
-						CHECK(end != ptr, "Invalid %s on line %d.\n",
+						CHECK(end != ptr, "Invalid %s on line %d.",
 							columns[column] == COLUMN_SIZE ? "SIZE" : "address",
 							symbol + 1);
 						
@@ -295,13 +295,13 @@ static SymbolTable parse_table(Buffer input)
 						else
 						{
 							u32 overlay = columns[column] - COLUMN_FIRST_OVERLAY;
-							CHECK(overlay < table.overlay_count, "Invalid column on line %d.\n", symbol + 1);
+							CHECK(overlay < table.overlay_count, "Invalid column on line %d.", symbol + 1);
 							
 							table.symbols[symbol].overlay_addresses[overlay] = value;
 							table.symbols[symbol].overlay = 1;
 							
 							CHECK(table.symbols[symbol].core_address == 0,
-								"Symbol '%s' has multiple addresses in the CSV file.\n",
+								"Symbol '%s' has multiple addresses in the CSV file.",
 								table.symbols[symbol].name);
 						}
 						
@@ -309,7 +309,7 @@ static SymbolTable parse_table(Buffer input)
 					}
 				}
 				
-				CHECK(*ptr == ',' || *ptr == '\n', "Invalid delimiters on line %d.\n", symbol + 1);
+				CHECK(*ptr == ',' || *ptr == '\n', "Invalid delimiters on line %d.", symbol + 1);
 				if (*ptr == ',')
 					ptr++;
 				
@@ -332,7 +332,7 @@ static u32 parse_table_header(const char** p, SymbolTable* table, Column* column
 	
 	while (*ptr != '\0' && *ptr != '\n')
 	{
-		CHECK(column < MAX_COLUMNS, "Too many columns.\n");
+		CHECK(column < MAX_COLUMNS, "Too many columns.");
 		
 		int quoted = 0;
 		if (*ptr == '"')
@@ -367,13 +367,13 @@ static u32 parse_table_header(const char** p, SymbolTable* table, Column* column
 					ptr++;
 					
 					first = strtoul(ptr, &end, 10);
-					CHECK(end != ptr && first < MAX_LEVELS, "Invalid interval column heading (bad level number).\n");
+					CHECK(end != ptr && first < MAX_LEVELS, "Invalid interval column heading (bad level number).");
 					ptr = end;
 					
-					CHECK(*ptr++ == ',', "Invalid interval column heading (missing comma).\n");
+					CHECK(*ptr++ == ',', "Invalid interval column heading (missing comma).");
 					
 					last = strtoul(ptr, &end, 10);
-					CHECK(end != ptr && last < MAX_LEVELS && first < last, "Invalid interval column heading (bad level number).\n");
+					CHECK(end != ptr && last < MAX_LEVELS && first < last, "Invalid interval column heading (bad level number).");
 					ptr = end;
 					
 					CHECK(*ptr++ == ']', "Invalid interval column heading (missing closing bracket).");
@@ -390,19 +390,19 @@ static u32 parse_table_header(const char** p, SymbolTable* table, Column* column
 						ptr++;
 						
 						u32 level = strtoul(ptr, &end, 10);
-						CHECK(end != ptr && level < MAX_LEVELS, "Invalid set column heading (bad level number).\n");
+						CHECK(end != ptr && level < MAX_LEVELS, "Invalid set column heading (bad level number).");
 						ptr = end;
 						
 						table->levels[level] = (u8) table->overlay_count;
 						table->level_count = MAX(table->level_count, level);
 					} while (*ptr == ',');
 					
-					CHECK(*ptr++ == '}', "Invalid set column heading (missing closing bracket).\n");
+					CHECK(*ptr++ == '}', "Invalid set column heading (missing closing bracket).");
 					
 					break;
 				default: /* Scalar. */
 					first = strtoul(ptr, &end, 10);
-					CHECK(end != ptr && first < MAX_LEVELS, "Invalid scalar column heading (bad level number).\n");
+					CHECK(end != ptr && first < MAX_LEVELS, "Invalid scalar column heading (bad level number).");
 					ptr = end;
 					
 					table->levels[first] = (u8) table->overlay_count;
@@ -413,7 +413,7 @@ static u32 parse_table_header(const char** p, SymbolTable* table, Column* column
 		}
 		
 		if (quoted)
-			CHECK(*ptr++ == '"', "Unexpected characters in table header.\n");
+			CHECK(*ptr++ == '"', "Unexpected characters in table header.");
 		
 		if (*ptr == ',')
 			ptr++;
@@ -421,7 +421,7 @@ static u32 parse_table_header(const char** p, SymbolTable* table, Column* column
 		column++;
 	}
 	
-	CHECK(*ptr++ == '\n', "Unexpected end of input table file.\n");
+	CHECK(*ptr++ == '\n', "Unexpected end of input table file.");
 	
 	*p = ptr;
 	
@@ -443,7 +443,7 @@ static u32 parse_archive_file(SymbolTable* table, Buffer archive)
 	u32 offset = 0;
 	u32 relocation_count = 0;
 	
-	CHECK(strncmp(archive.data, "!<arch>\n", 8) == 0, "Invalid archive header.\n");
+	CHECK(strncmp(archive.data, "!<arch>\n", 8) == 0, "Invalid archive header.");
 	offset += 8;
 	
 	while (offset < archive.size)
@@ -454,7 +454,7 @@ static u32 parse_archive_file(SymbolTable* table, Buffer archive)
 		u32 file_size = atoi(header->file_size);
 		
 		char* identifier_end = (char*) memchr(header->identifier, '/', sizeof(header->identifier));
-		CHECK(identifier_end, "Corrupted archive (invalid identifier).\n");
+		CHECK(identifier_end, "Corrupted archive (invalid identifier).");
 		
 		char identifier[16];
 		memcpy(identifier, header->identifier, identifier_end - header->identifier);
@@ -490,7 +490,7 @@ static u32 parse_object_file(SymbolTable* table, Buffer object)
 		strtab = buffer_get(object, link_offset, sizeof(ElfSectionHeader), "linked section header");
 	}
 	
-	CHECK(strtab, "No linked string table section.\n");
+	CHECK(strtab, "No linked string table section.");
 	
 	/* Mark symbols that are referenced in the input object file as used. */
 	ElfSymbol* symbols = buffer_get(object, symtab->offset, symtab->size, "symbol table");
@@ -520,7 +520,7 @@ static u32 parse_object_file(SymbolTable* table, Buffer object)
 		for (u32 j = 0; j < section->size / sizeof(ElfRelocation); j++)
 		{
 			unsigned int symbol_index = relocs[j].info >> 8;
-			CHECK(symbol_index < symtab->size / sizeof(ElfSymbol), "Invalid symbol index %u.\n", symbol_index);
+			CHECK(symbol_index < symtab->size / sizeof(ElfSymbol), "Invalid symbol index %u.", symbol_index);
 			ElfSymbol* symbol = &symbols[symbol_index];
 			
 			const char* name = buffer_string(object, strtab->offset + symbol->name, "symbol name");
@@ -752,7 +752,7 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const 
 		}
 	}
 	
-	CHECK(fastdecompress, "No 'FastDecompress' symbol found in CSV table.\n");
+	CHECK(fastdecompress, "No 'FastDecompress' symbol found in CSV table.");
 	
 	u32* fastdecompress_funcs = (u32*) &buffer.data[fastdecompress_offset];
 	for (u32 i = 0; i < table->overlay_count; i++)
@@ -888,5 +888,5 @@ static u32 find_string(const char* string, const char** array, u32 count)
 		if (strcmp(string, array[i]) == 0)
 			return i;
 	
-	ERROR("No '%s' string exists in the array.\n", string);
+	ERROR("No '%s' string exists in the array", string);
 }

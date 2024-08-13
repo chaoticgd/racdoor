@@ -27,14 +27,14 @@ int main(int argc, char** argv)
 		}
 	
 	CHECK(input_csv_count > 0 || !output_path,
-		"usage: %s <input csvs...> -o <output csv>\n",
+		"usage: %s <input csvs...> -o <output csv>",
 		(argc > 0) ? argv[0] : "csvmerge");
 	
 	u32 header_size = 0;
 	while (input_csvs[0].data[header_size] != '\0' && input_csvs[0].data[header_size] != '\n')
 		header_size++;
 	
-	CHECK(input_csvs[0].data[header_size++] == '\n', "Unexpected end of input file '%s'.\n", input_paths[0]);
+	CHECK(input_csvs[0].data[header_size++] == '\n', "Unexpected end of input file '%s'.", input_paths[0]);
 	
 	Buffer output_csv = {
 		.data = checked_malloc(max_output_size),

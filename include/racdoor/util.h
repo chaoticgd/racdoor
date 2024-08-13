@@ -35,7 +35,7 @@ typedef double f64;
 	#define NULL ((void*) 0)
 	#define ERROR(...) __builtin_trap();
 #else
-	#define ERROR(...) do { fprintf(stderr, "ERROR: " __VA_ARGS__); exit(1); } while(0);
+	#define ERROR(...) do { fprintf(stderr, "ERROR: " __VA_ARGS__); fputs("\n", stderr); exit(1); } while(0);
 #endif
 
 #define CHECK(condition, ...) if(!(condition)) { ERROR(__VA_ARGS__); }
@@ -54,7 +54,7 @@ typedef double f64;
 	static inline void* checked_malloc(unsigned long size)
 	{
 		void* ptr = malloc(size);
-		CHECK(ptr || size == 0, "Failed to allocate memory.\n");
+		CHECK(ptr || size == 0, "Failed to allocate memory.");
 		return ptr;
 	}
 #endif

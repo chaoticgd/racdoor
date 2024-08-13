@@ -11,9 +11,9 @@
 ElfFileHeader* parse_elf_header(Buffer object)
 {
 	ElfFileHeader* elf_header = buffer_get(object, 0, sizeof(ElfFileHeader), "ELF file header");
-	CHECK(elf_header->ident_magic == 0x464c457f, "ELF file has bad magic number.\n");
-	CHECK(elf_header->ident_class == 1, "ELF file isn't 32 bit.\n");
-	CHECK(elf_header->machine == 8, "ELF file isn't compiled for MIPS.\n");
+	CHECK(elf_header->ident_magic == 0x464c457f, "ELF file has bad magic number.");
+	CHECK(elf_header->ident_class == 1, "ELF file isn't 32 bit.");
+	CHECK(elf_header->machine == 8, "ELF file isn't compiled for MIPS.");
 	return elf_header;
 }
 
@@ -33,7 +33,7 @@ ElfSectionHeader* lookup_section(Buffer object, const char* section)
 			return section_header;
 	}
 	
-	ERROR("No '%s' section.\n", section);
+	ERROR("No '%s' section.", section);
 }
 
 u32 lookup_symbol(Buffer object, const char* symbol)
@@ -49,7 +49,7 @@ u32 lookup_symbol(Buffer object, const char* symbol)
 		strtab = buffer_get(object, link_offset, sizeof(ElfSectionHeader), "linked section header");
 	}
 	
-	CHECK(strtab, "No linked string table section.\n");
+	CHECK(strtab, "No linked string table section.");
 	
 	/* Lookup the symbol by name. */
 	ElfSymbol* symbols = buffer_get(object, symtab->offset, symtab->size, "symbol table");
@@ -63,7 +63,7 @@ u32 lookup_symbol(Buffer object, const char* symbol)
 		}
 	}
 	
-	ERROR("Undefined symbol '%s'.\n", symbol);
+	ERROR("Undefined symbol '%s'.", symbol);
 }
 
 u32 lookup_runtime_symbol_index(Buffer symbolmap, const char* name)
@@ -79,7 +79,7 @@ u32 lookup_runtime_symbol_index(Buffer symbolmap, const char* name)
 		return head->entries[i].runtime_index;
 	}
 	
-	ERROR("Undefined symbol '%s'.\n", name);
+	ERROR("Undefined symbol '%s'.", name);
 }
 
 #endif

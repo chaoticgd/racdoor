@@ -69,6 +69,6 @@ void apply_relocation(u32* dest, u8 type, u32 value)
 			*dest = (old & ~MIPS_IMMEDIATE_MASK) | (field & MIPS_IMMEDIATE_MASK);
 			break;
 		default:
-			ERROR("Unsupported relocation type %hhu!\n", type);
+			ERROR("Unsupported relocation type %hhu!", type);
 	}
 }
