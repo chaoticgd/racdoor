@@ -652,12 +652,10 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const 
 	for (u32 i = 0; i < table->symbol_count; i++)
 		if (table->symbols[i].used && table->symbols[i].overlay)
 			symbolmap_data_size += strlen(table->symbols[i].name) + 1;
-	symbolmap_data_size = ALIGN(symbolmap_data_size, 4);
 	u32 serial_size = strlen(serial) + 1;
 	u32 shstrtab_size = 0;
 	for (u32 i = 0; i < ARRAY_SIZE(section_names); i++)
 		shstrtab_size += strlen(section_names[i]) + 1;
-	shstrtab_size = ALIGN(shstrtab_size, 4);
 	u32 section_headers_size = ARRAY_SIZE(section_names) * sizeof(ElfSectionHeader);
 	u32 symtab_size = (1 + static_symbol_count) * sizeof(ElfSymbol);
 	u32 strtab_size = 1;
@@ -666,17 +664,17 @@ static Buffer build_object_file(SymbolTable* table, u32 relocation_count, const 
 			strtab_size += strlen(table->symbols[i].name) + 1;
 	
 	u32 file_header_offset = 0;
-	u32 overlaymap_offset = file_header_offset + file_header_size;
-	u32 addrtbl_offset = overlaymap_offset + overlaymap_size;
-	u32 fastdecompress_offset = addrtbl_offset + addrtbl_size;
-	u32 relocs_offset = fastdecompress_offset + fastdecompress_size;
-	u32 symbolmap_head_offset = relocs_offset + relocs_size;
-	u32 symbolmap_data_offset = symbolmap_head_offset + symbolmap_head_size;
-	u32 serial_offset = symbolmap_data_offset + symbolmap_data_size;
-	u32 shstrtab_offset = serial_offset + serial_size;
-	u32 section_headers_offset = shstrtab_offset + shstrtab_size;
-	u32 symtab_offset = section_headers_offset + section_headers_size;
-	u32 strtab_offset = symtab_offset + symtab_size;
+	u32 overlaymap_offset = ALIGN(file_header_offset + file_header_size, 4);
+	u32 addrtbl_offset = ALIGN(overlaymap_offset + overlaymap_size, 4);
+	u32 fastdecompress_offset = ALIGN(addrtbl_offset + addrtbl_size, 4);
+	u32 relocs_offset = ALIGN(fastdecompress_offset + fastdecompress_size, 4);
+	u32 symbolmap_head_offset = ALIGN(relocs_offset + relocs_size, 4);
+	u32 symbolmap_data_offset = ALIGN(symbolmap_head_offset + symbolmap_head_size, 4);
+	u32 serial_offset = ALIGN(symbolmap_data_offset + symbolmap_data_size, 4);
+	u32 shstrtab_offset = ALIGN(serial_offset + serial_size, 4);
+	u32 section_headers_offset = ALIGN(shstrtab_offset + shstrtab_size, 4);
+	u32 symtab_offset = ALIGN(section_headers_offset + section_headers_size, 4);
+	u32 strtab_offset = ALIGN(symtab_offset + symtab_size, 4);
 	
 	u32 file_size = strtab_offset + strtab_size;
 	
