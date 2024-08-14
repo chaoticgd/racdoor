@@ -76,8 +76,9 @@ uninstall the hook later.
 Automatic function entry point hooks work in the same way, except that you do
 not need to call @code{install_hook} or @code{uinstall_hook} yourself. Instead,
 you define the hook using the @code{AUTO_HOOK} macro and it will automatically
-be installed and uninstalled by @code{hook.c}'s module load and functions. Note
-that this approach saves memory since fewer MIPS instructions will be generated.
+be installed and uninstalled by @code{hook.c}'s module load and unload
+functions. Note that this approach saves memory since fewer MIPS instructions
+will be generated.
 
 Finally, function call hooks modify function calls to point to a different
 function, can be installed using the @code{install_call_hook} function and can

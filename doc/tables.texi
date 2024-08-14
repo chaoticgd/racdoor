@@ -16,9 +16,9 @@ placed in the @code{gameglobals.cpp} file, which is linked into the core
 sections. This includes the variables associated with all memory card data
 blocks.
 
-This presents a challenge for hackers trying to patch these games since most
-functions and a lot of global variables move around in memory depending on the
-currently loaded level.
+This presents a challenge for threat actors trying to patch these games since
+most functions and a lot of global variables move around in memory depending on
+the currently loaded level.
 
 Racdoor solves this problem using a custom dynamic linking system. The addresses
 of each function and global variable that need to be referenced by either the
