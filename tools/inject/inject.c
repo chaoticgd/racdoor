@@ -58,13 +58,13 @@ int main(int argc, char** argv)
 			inject_rac(&save, rdx, key);
 			break;
 		case GC_GAME_BLOCK_COUNT:
-			printf("Going Commando support not yet implemented.");
+			printf("Going Commando support not yet implemented.\n");
 			break;
 		case UYA_GAME_BLOCK_COUNT:
-			printf("Up Your Arsenal support not yet implemented.");
+			printf("Up Your Arsenal support not yet implemented.\n");
 			break;
 		case DL_GAME_BLOCK_COUNT:
-			printf("Deadlocked support not yet implemented.");
+			printf("Deadlocked support not yet implemented.\n");
 			break;
 		default:
 			ERROR("Unexpected block count.");
