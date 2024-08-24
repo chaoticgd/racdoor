@@ -888,5 +888,5 @@ static u32 find_string(const char* string, const char** array, u32 count)
 		if (strcmp(string, array[i]) == 0)
 			return i;
 	
-	ERROR("No '%s' string exists in the array", string);
+	ERROR("No '%s' string exists in the array.", string);
 }
