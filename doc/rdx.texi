@@ -138,9 +138,6 @@ be used to specify that the implant targets the NTSC release of Ratchet & Clank.
 
 @table @code
 
-@item _racdoor_max_level
-The maximum legal value of the @code{Level} variable.
-
 @item _racdoor_help_message
 The index of the help message used to trigger the exploit.
 
@@ -232,5 +229,19 @@ the @code{FastDecompress} function.
 @item _racdoor_relocs
 Runtime relocation table. This is filled in by @code{rdxlink} and only contains
 relocations that are needed for linking against the level overlays.
+
+@end table
+
+@node Other Symbols
+@subsection Other Symbols
+
+@table @code
+
+@item _racdoor_max_level
+The maximum legal value of the @code{Level} variable.
+
+@item _racdoor_pcsx2_crc
+The hash value used by PCSX2 to identify said game. Note that this isn't a real
+CRC32 value, but rather a simple xor-based hash.
 
 @end table
