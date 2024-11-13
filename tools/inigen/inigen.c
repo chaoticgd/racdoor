@@ -250,7 +250,10 @@ static Buffer build_object_file(SymbolTable* table)
 		{
 			symbol->name = name_offset;
 			symbol->value = table->symbols[i].core_address;
-			symbol->size = table->symbols[i].size;
+			if (table->symbols[i].type == STT_OBJECT)
+				symbol->size = table->symbols[i].size ? table->symbols[i].size : 1;
+			else
+				symbol->size = table->symbols[i].size;
 			symbol->info = table->symbols[i].type | (STB_GLOBAL << 4);
 			symbol->shndx = 0;
 			
