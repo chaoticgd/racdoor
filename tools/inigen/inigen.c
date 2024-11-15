@@ -104,6 +104,12 @@ int main(int argc, char** argv)
 		fprintf(ini_file, "Condition = [%x]==%x\n", level_address, i);
 	}
 	
+	fprintf(ini_file, "[Debugger/Analysis]\n");
+	fprintf(ini_file, "CustomFunctionScanRange = true\n");
+	fprintf(ini_file, "FunctionScanStartAddress = _section_coretext\n");
+	fprintf(ini_file, "FunctionScanEndAddress = _section_text_end\n");
+	fprintf(ini_file, "FunctionScanMode = Scan From Memory\n");
+	
 	/* Create a directory for the .elf files. */
 	char directory_path[1024];
 	snprintf(directory_path, sizeof(directory_path), "%s/%s", output_directory, serial);
