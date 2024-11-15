@@ -10,20 +10,6 @@
 #include <stdint.h>
 #include <string.h>
 
-typedef enum {
-	COLUMN_NAME, /* Symbol name. This should be a non-mangled C identifier. */
-	COLUMN_TYPE, /* ELF symbol type. */
-	COLUMN_COMMENT, /* Ignored. */
-	COLUMN_SIZE, /* Size in bytes. */
-	COLUMN_CORE, /* Address in a core section from the ELF. These are always loaded. */
-	COLUMN_SPCORE, /* UYA specific. Address in a core section from the singleplayer ELF. */
-	COLUMN_MPCORE, /* UYA specific. Address in a core section from the multiplayer ELF. */
-	COLUMN_FRONTEND, /* Address in the main menu overlay from the ELF. */
-	COLUMN_FRONTBIN, /* Address in the main menu overlay from MISC.WAD. */
-	COLUMN_FIRST_OVERLAY, /* Address in a level overlay from the LEVEL*.WAD files. */
-	MAX_COLUMNS = 100
-} Column;
-
 typedef struct {
 	u32 column;
 	const char* string;
@@ -41,8 +27,6 @@ ColumnName column_names[] = {
 	{COLUMN_FRONTBIN, "FRONTBIN"}
 };
 
-static u32 parse_table_header(const char** p, SymbolTable* table, Column* columns);
-
 SymbolTable parse_table(Buffer input)
 {
 	SymbolTable table = {};
@@ -55,7 +39,7 @@ SymbolTable parse_table(Buffer input)
 	/* First we iterate over all of the headings and record information about
 	   what is stored in each of the columns, and how each of the levels relate
 	   to the overlays. */
-	u32 column_count = parse_table_header(&ptr, &table, columns);
+	u32 column_count = parse_table_header(&ptr, &table, columns, TRUE);
 	
 	/* Each remaining line in the table file will be a symbol. */
 	const char* backup_ptr = ptr;
@@ -205,7 +189,7 @@ SymbolTable parse_table(Buffer input)
 	return table;
 }
 
-static u32 parse_table_header(const char** p, SymbolTable* table, Column* columns)
+u32 parse_table_header(const char** p, SymbolTable* table, Column* columns, b8 expect_newline)
 {
 	const char* ptr = *p;
 	u32 column = 0;
@@ -301,7 +285,8 @@ static u32 parse_table_header(const char** p, SymbolTable* table, Column* column
 		column++;
 	}
 	
-	CHECK(*ptr++ == '\n', "Unexpected end of input table file.");
+	if (expect_newline)
+		CHECK(*ptr++ == '\n', "Unexpected end of input table file.");
 	
 	*p = ptr;
 	

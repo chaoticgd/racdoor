@@ -111,7 +111,10 @@ int main(int argc, char** argv)
 	
 	/* Generate the .elf files referenced by the .ini file. */
 	for (u32 i = 0; i < table.symbol_count; i++)
+	{
 		table.symbols[i].used = table.symbols[i].core_address != 0;
+		table.symbols[i].temp_address = table.symbols[i].core_address;
+	}
 	
 	Buffer core = build_object_file(&table);
 	
@@ -124,7 +127,7 @@ int main(int argc, char** argv)
 		for (u32 j = 0; j < table.symbol_count; j++)
 		{
 			table.symbols[j].used = table.symbols[j].overlay_addresses[i] != 0;
-			table.symbols[j].core_address = table.symbols[j].overlay_addresses[i];
+			table.symbols[j].temp_address = table.symbols[j].overlay_addresses[i];
 		}
 		
 		Buffer overlay = build_object_file(&table);
@@ -249,7 +252,7 @@ static Buffer build_object_file(SymbolTable* table)
 		if (table->symbols[i].used)
 		{
 			symbol->name = name_offset;
-			symbol->value = table->symbols[i].core_address;
+			symbol->value = table->symbols[i].temp_address;
 			if (table->symbols[i].type == STT_OBJECT)
 				symbol->size = table->symbols[i].size ? table->symbols[i].size : 1;
 			else

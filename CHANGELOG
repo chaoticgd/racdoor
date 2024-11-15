@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v1.2
+----
+
+- Added inigen tool for exporting CSV symbols to PCSX2.
+- Added sectiondump tool for generating CSV symbols from section headers.
+
 v1.1
 ----
 

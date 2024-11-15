@@ -220,13 +220,13 @@ static void sort_symbols(SymbolTable* table)
 	for (u32 i = 0; i < table->symbol_count; i++)
 	{
 		Symbol* symbol = &table->symbols[i];
-		symbol->highest_address = MAX(symbol->core_address, symbol->highest_address);
-		symbol->highest_address = MAX(symbol->spcore_address, symbol->highest_address);
-		symbol->highest_address = MAX(symbol->mpcore_address, symbol->highest_address);
-		symbol->highest_address = MAX(symbol->frontend_address, symbol->highest_address);
-		symbol->highest_address = MAX(symbol->frontbin_address, symbol->highest_address);
+		symbol->temp_address = MAX(symbol->core_address, symbol->temp_address);
+		symbol->temp_address = MAX(symbol->spcore_address, symbol->temp_address);
+		symbol->temp_address = MAX(symbol->mpcore_address, symbol->temp_address);
+		symbol->temp_address = MAX(symbol->frontend_address, symbol->temp_address);
+		symbol->temp_address = MAX(symbol->frontbin_address, symbol->temp_address);
 		for (u32 j = 0; j < table->overlay_count; j++)
-			symbol->highest_address = MAX(symbol->overlay_addresses[j], symbol->highest_address);
+			symbol->temp_address = MAX(symbol->overlay_addresses[j], symbol->temp_address);
 	}
 	
 	qsort(table->symbols, table->symbol_count, sizeof(Symbol), symbol_comparator);
@@ -234,7 +234,7 @@ static void sort_symbols(SymbolTable* table)
 
 static int symbol_comparator(const void* lhs, const void* rhs)
 {
-	return ((Symbol*) lhs)->highest_address > ((Symbol*) rhs)->highest_address;
+	return ((Symbol*) lhs)->temp_address > ((Symbol*) rhs)->temp_address;
 }
 
 static void map_symbols_to_runtime_indices(SymbolTable* table)
