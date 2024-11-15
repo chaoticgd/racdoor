@@ -112,7 +112,7 @@ int main(int argc, char** argv)
 	/* Generate the .elf files referenced by the .ini file. */
 	for (u32 i = 0; i < table.symbol_count; i++)
 	{
-		table.symbols[i].used = table.symbols[i].core_address != 0;
+		table.symbols[i].used = table.symbols[i].core_address != 0 && strncmp(table.symbols[i].name, "_racdoor", 8) != 0;
 		table.symbols[i].temp_address = table.symbols[i].core_address;
 	}
 	
@@ -126,7 +126,7 @@ int main(int argc, char** argv)
 	{
 		for (u32 j = 0; j < table.symbol_count; j++)
 		{
-			table.symbols[j].used = table.symbols[j].overlay_addresses[i] != 0;
+			table.symbols[j].used = table.symbols[j].overlay_addresses[i] != 0 && strncmp(table.symbols[i].name, "_racdoor", 8) != 0;
 			table.symbols[j].temp_address = table.symbols[j].overlay_addresses[i];
 		}
 		
