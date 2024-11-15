@@ -104,6 +104,7 @@ int main(int argc, char** argv)
 		fprintf(ini_file, "Condition = [%x]==%x\n", level_address, i);
 	}
 	
+	fprintf(ini_file, "\n");
 	fprintf(ini_file, "[Debugger/Analysis]\n");
 	fprintf(ini_file, "CustomFunctionScanRange = true\n");
 	fprintf(ini_file, "FunctionScanStartAddress = _section_coretext\n");
