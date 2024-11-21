@@ -74,7 +74,7 @@ if it is never called since it is used to store the data that is needed to
 uninstall the hook later.
 
 Automatic function entry point hooks work in the same way, except that you do
-not need to call @code{install_hook} or @code{uinstall_hook} yourself. Instead,
+not need to call @code{install_hook} or @code{uninstall_hook} yourself. Instead,
 you define the hook using the @code{AUTO_HOOK} macro and it will automatically
 be installed and uninstalled by @code{hook.c}'s module load and unload
 functions. Note that this approach saves memory since fewer MIPS instructions

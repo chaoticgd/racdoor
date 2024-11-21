@@ -37,9 +37,10 @@ into an ELF file using GNU @code{ld}. An additional link step, implemented by
 
 At runtime, immediately after the payload is unpacked it will be linked using
 the @code{apply_relocations} function. This function will read the level number,
-map it to an overlay index, and use that to index the @code{.racdoor.addrtbl}
-section to obtain a pointer to table of addresses that are to be used for that
-level. It will then apply the runtime relocations using those addresses.
+map it to an overlay index, and use that to index into the
+@code{.racdoor.addrtbl} section to obtain a pointer to the table of addresses
+that are to be used for that level. It will then apply the runtime relocations
+using those addresses.
 
 @node Use With PCSX2
 @section Use With PCSX2
