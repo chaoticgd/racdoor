@@ -7,13 +7,10 @@
 	.set nomacro
 	.section .racdoor.loader
 	.global loader
-loader:
-	addiu $sp, $sp, -0x1c0
-
 # Save the values that would've been in the general purpose registers right
 # before the initial hook was triggered so we can restore them and jump back to
 # the game later.
-loader_save_regs:
+loader:
 	sq $s2, 0xa0($sp)
 	sq $t3, 0xc0($sp)
 	sq $t8, 0x190($sp)

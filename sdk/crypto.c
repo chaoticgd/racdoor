@@ -41,12 +41,12 @@ void gen_xor_decryptor(u32* dest, u32 payload, u32 payload_end, u32 entry, u32 k
 	CHECK(ptr - dest == DECRYPTOR_ENTRY_OFFSET, "Decryptor code out of sync with DECRYPTOR_ENTRY_OFFSET.");
 	
 	/* Save overwritten registers on the stack. */
-	*ptr++ = MIPS_SQ(MIPS_A0, 0xf0 - 0x1c0, MIPS_SP);
-	*ptr++ = MIPS_SQ(MIPS_S5, 0x40 - 0x1c0, MIPS_SP);
-	*ptr++ = MIPS_NOP();
-	*ptr++ = MIPS_SQ(MIPS_T2, 0x90 - 0x1c0, MIPS_SP);
-	*ptr++ = MIPS_SQ(MIPS_T7, 0x160 - 0x1c0, MIPS_SP);
-	*ptr++ = MIPS_SQ(MIPS_S4, 0x30 - 0x1c0, MIPS_SP);
+	*ptr++ = MIPS_ADDIU(MIPS_SP, MIPS_SP, -0x1c0);
+	*ptr++ = MIPS_SQ(MIPS_A0, 0xf0, MIPS_SP);
+	*ptr++ = MIPS_SQ(MIPS_S5, 0x40, MIPS_SP);
+	*ptr++ = MIPS_SQ(MIPS_T2, 0x90, MIPS_SP);
+	*ptr++ = MIPS_SQ(MIPS_T7, 0x160, MIPS_SP);
+	*ptr++ = MIPS_SQ(MIPS_S4, 0x30, MIPS_SP);
 	*ptr++ = MIPS_NOP();
 	
 	/* Load immediates. */
