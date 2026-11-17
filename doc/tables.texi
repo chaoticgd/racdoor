@@ -26,7 +26,7 @@ exploit or the payload are recorded in CSV files, which can be written manually
 or by using scripts. These CSV files are, at build time, merged together using
 @code{csvmerge} and then converted into an object file using @code{tblgen}.
 
-The resultant object file (or "table" file) contains only the symbol that were
+The resultant object file (or "table" file) contains only the symbols that were
 referenced for that particular build. The core symbols are included as standard
 ELF symbols, while the symbols that depend on the current level are put into
 custom sections designed for dynamic linking at runtime.

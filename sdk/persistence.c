@@ -75,7 +75,7 @@ void* parse_bin_thunk(void)
 	FlushCache(0);
 	
 	/* The unpack call will reset all the global variables, so we need to make
-	   a backup of the decryptor here.. */
+	   a backup of the decryptor here. */
 	u32 decryptor_backup[DECRYPTOR_SIZE];
 	memcpy(decryptor_backup, decryptor, sizeof(decryptor));
 	
