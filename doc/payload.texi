@@ -57,7 +57,7 @@ loop returns. You can designate a function to be executed at this time using the
 @node Hooking
 @section Hooking
 
-Racdoor supports three types of hook: functions entry point hooks, automatic
+Racdoor supports three types of hooks: functions entry point hooks, automatic
 function entry point hooks, and function call hooks.
 
 Function entry point hooks work by replacing the first two instructions in the
